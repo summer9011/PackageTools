@@ -123,6 +123,6 @@ class PTAddModuleFrame (wx.Frame):
         module.moduleName = os.path.basename(module.localPath)
         PTDBManager().addNewModule([module], self.AddModuleCallback)
 
-    def AddModuleCallback(self, result):
+    def AddModuleCallback(self, moduleList):
         if self.callback != None:
-            self.callback(result)
+            self.callback(moduleList)

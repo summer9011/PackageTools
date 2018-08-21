@@ -69,5 +69,6 @@ class PTDBManager:
                                                                module.remotePath,
                                                                module.username,
                                                                module.password))
+            module.id = self.dbCursor.lastrowid
         self.dbConnect.commit()
-        callback(True)
+        callback(moduleList)
