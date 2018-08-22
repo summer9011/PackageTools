@@ -18,7 +18,7 @@ class PTDBManager:
 
     def openDB(self):
         if self.dbConnect == None:
-            versionDB = "%s/pt-%d.db" % (os.getcwd(), 1)
+            versionDB = os.path.join(os.getcwd(),"pt-1.db")
             existVersion = os.path.exists(versionDB)
 
             self.dbConnect = sqlite3.connect(versionDB)

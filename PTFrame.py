@@ -12,6 +12,7 @@ class PTFrame (wx.Frame):
     logArea = None
 
     moduleList = None
+    moduleViewList = None
 
     def __init__(self):
         windowSize = wx.DisplaySize()
@@ -41,13 +42,14 @@ class PTFrame (wx.Frame):
 
     def addModuleList(self):
         self.moduleList = PTDBManager().getModuleList()
+        self.moduleViewList = []
 
         self.modulePanel = wx.Panel(self)
 
         #Tip
         listName = wx.StaticText(self.modulePanel)
         listName.SetLabelText(u"Module List")
-        refreshBtn = wx.Button(self.modulePanel, wx.ID_ANY, u"Sync versions")
+        refreshBtn = wx.Button(self.modulePanel, wx.ID_ANY, u"Refresh versions")
         refreshBtn.Bind(wx.EVT_BUTTON, self.OnRefreshModuleVersions)
         hbx = wx.BoxSizer(wx.HORIZONTAL)
         hbx.Add((10,0))
@@ -103,6 +105,7 @@ class PTFrame (wx.Frame):
         vbx.Add(hbox4, flag=wx.ALIGN_LEFT)
 
         self.modulePanel.SetSizer(vbx)
+        self.modulePanel.Fit()
         self.refreshVersionsUsingThread()
 
     def addModule(self, module):
@@ -111,25 +114,28 @@ class PTFrame (wx.Frame):
         idVal = wx.StaticText(self.modulePanel)
         idVal.SetLabelText("%d" % (module.id))
         self.grid.Add(idVal, 0, wx.EXPAND)
+        self.moduleViewList.append(idVal)
 
         nameVal = wx.StaticText(self.modulePanel)
         nameVal.SetLabelText(module.moduleName)
         self.grid.Add(nameVal, 0, wx.EXPAND)
+        self.moduleViewList.append(nameVal)
 
         localVal = wx.StaticText(self.modulePanel)
         localVal.SetLabelText(module.localVersion)
         self.grid.Add(localVal, 0, wx.EXPAND)
+        self.moduleViewList.append(localVal)
 
         remoteVal = wx.StaticText(self.modulePanel)
         remoteVal.SetLabelText(module.remoteVersion)
         self.grid.Add(remoteVal, 0, wx.EXPAND)
+        self.moduleViewList.append(remoteVal)
 
         operateBtn = wx.Button(self.modulePanel, wx.ID_ANY, u"Publish Module")
         operateBtn.Bind(wx.EVT_BUTTON, self.OnPublishModule)
         operateBtn.Enable(False)
         self.grid.Add(operateBtn, 0, wx.EXPAND)
-
-        self.grid.Fit(self.modulePanel)
+        self.moduleViewList.append(operateBtn)
 
     def OnPublishModule(self, event):
         print ""
@@ -138,7 +144,14 @@ class PTFrame (wx.Frame):
         PTModule.asyncModuleVersions(self.moduleList, self.refreshVersionCallback)
 
     def refreshVersionCallback(self, module):
-        print module
+        index = self.moduleList.index(module)*5
+        localVal = self.moduleViewList[index+2]
+        remoteVal = self.moduleViewList[index+3]
+        operateBtn = self.moduleViewList[index+4]
+
+        localVal.SetLabelText(module.localVersion)
+        remoteVal.SetLabelText(module.remoteVersion)
+        operateBtn.Enable(module.isNewer())
 
     def OnRefreshModuleVersions(self, event):
         self.refreshVersionsUsingThread()
@@ -149,5 +162,5 @@ class PTFrame (wx.Frame):
     def OnAddModuleCallback(self, moduleList):
         self.addModuleFrame.Destroy()
         if moduleList != None:
-            for module in moduleList:
-                self.addModule(module)
+            self.modulePanel.Destroy()
+            self.addModuleList()
