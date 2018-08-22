@@ -53,7 +53,7 @@ class PTAddModuleFrame (wx.Frame):
         tipBox2.Add(self.remotePathTip, flag=wx.ALIGN_LEFT)
 
         self.remotePathTextTip = wx.StaticText(self)
-        self.remotePathTextTip.SetLabelText(u"URL(https:||http:|svn:) :")
+        self.remotePathTextTip.SetLabelText(u"SVN URL :")
         self.remotePathText = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT, size=(400, 22))
         textBox = wx.BoxSizer(wx.HORIZONTAL)
         textBox.Add((10, 0))
@@ -121,7 +121,11 @@ class PTAddModuleFrame (wx.Frame):
         module.username = self.remotePathUser.GetValue()
         module.password = self.remotePathPwd.GetValue()
         module.moduleName = os.path.basename(module.localPath)
-        PTDBManager().addNewModule([module], self.AddModuleCallback)
+
+        if len(module.localVersion) > 0 and len(module.remoteVersion) > 0 and len(module.username) > 0 and len(module.password) > 0:
+            PTDBManager().addNewModule([module], self.AddModuleCallback)
+        else:
+            wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)
 
     def AddModuleCallback(self, moduleList):
         if self.callback != None:
