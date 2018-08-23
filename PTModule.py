@@ -5,6 +5,7 @@ import re
 import urllib2
 import time
 import wx
+import PTSpecRepo
 
 asyncList = None
 
@@ -15,7 +16,7 @@ class PTModule:
     remotePath = None
     username = None
     password = None
-    specId = 0
+    repoId = 0
 
     localVersion = ""
     remoteVersion = ""

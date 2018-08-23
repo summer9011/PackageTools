@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-class PTSpec:
+class PTSpecRepo:
     id = None
-    specName = None
+    repoName = None
     remotePath = None

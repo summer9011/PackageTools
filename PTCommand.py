@@ -5,6 +5,7 @@ import thread
 import wx
 from PTDBManager import PTDBManager
 from PTModule import PTModule
+from PTSpecRepo import PTSpecRepo
 
 class PTCommand:
     __instance = None
@@ -29,9 +30,9 @@ class PTCommand:
         self.logOutput(copyRet, copyOutput, logCallback)
 
         if copyRet == 0:
-            spec = PTDBManager().getSpec(module.specId)
-            if spec != None:
-                podPush = "pod repo-svn push %s %s.podspec" % (spec.specName, module.moduleName)
+            repoInfo = PTDBManager().getSpecRepo(module.repoId)
+            if repoInfo != None:
+                podPush = "pod repo-svn push %s %s.podspec" % (repoInfo.repoName, module.moduleName)
                 self.logCommand(podPush, logCallback)
                 pushRet, pushOutput = commands.getstatusoutput(podPush)
                 self.logOutput(pushRet, pushOutput, logCallback)
@@ -48,6 +49,10 @@ class PTCommand:
         else:
             wx.CallAfter(logCallback, "\ncopy module %s trunk to tags error!!!\n" % module.moduleName)
             wx.CallAfter(completeCallback, False, module)
+
+    def addSpecRepo(self, specRepo, logCallback, completeCallback):
+        addRepo = ""
+        print "add repo to command"
 
     def logCommand(self, command, callback):
         wx.CallAfter(callback, "\n=====  %s  =====\n" % command)
