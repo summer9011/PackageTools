@@ -62,18 +62,20 @@ class PTFrame (wx.Frame):
         hbx.Add((10,0))
         hbx.Add(refreshBtn, flag=wx.ALIGN_LEFT)
 
-        self.grid = wx.GridSizer(1, 4, 10, 10)
+        self.grid = wx.GridSizer(1, 5, 10, 10)
 
         #Table header
         rowNameTip = wx.StaticText(self.modulePanel)
         rowNameTip.SetLabelText(u"Module")
+        rowRepoSpecTip = wx.StaticText(self.modulePanel)
+        rowRepoSpecTip.SetLabelText(u"Repo")
         rowLocalTip = wx.StaticText(self.modulePanel)
         rowLocalTip.SetLabelText(u"Local version")
         rowRemoteTip = wx.StaticText(self.modulePanel)
         rowRemoteTip.SetLabelText(u"Remote version")
         rowOperate = wx.StaticText(self.modulePanel)
         rowOperate.SetLabelText(u"Operate")
-        self.grid.AddMany([rowNameTip, rowLocalTip, rowRemoteTip, rowOperate])
+        self.grid.AddMany([rowNameTip, rowRepoSpecTip, rowLocalTip, rowRemoteTip, rowOperate])
 
         #Table rows
         for module in self.moduleList:
@@ -118,9 +120,13 @@ class PTFrame (wx.Frame):
     def addModule(self, module):
         self.grid.SetRows(self.grid.GetRows()+1)
 
-        nameVal = wx.StaticText(self.modulePanel, module.id*100+1)
+        nameVal = wx.StaticText(self.modulePanel, module.id*100)
         nameVal.SetLabelText(module.moduleName)
         self.grid.Add(nameVal, 0, wx.EXPAND)
+
+        repoVal = wx.StaticText(self.modulePanel, module.id*100+1)
+        repoVal.SetLabelText(module.specId)
+        self.grid.Add(repoVal, 0, wx.EXPAND)
 
         localVal = wx.StaticText(self.modulePanel, module.id*100+2)
         localVal.SetLabelText(module.localVersion)
