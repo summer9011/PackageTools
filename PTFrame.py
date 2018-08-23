@@ -1,25 +1,29 @@
 #!/usr/bin/env python
 import wx
+import time
 from PTAddModuleFrame import PTAddModuleFrame
+from PTAddSpecFrame import PTAddSpecFrame
 from PTDBManager import PTDBManager
 from PTModule import PTModule
+from PTCommand import PTCommand
 
 class PTFrame (wx.Frame):
     addModuleFrame = None
+    addSpecFrame = None
+
     modulePanel = None
     grid = None
 
     logArea = None
 
     moduleList = None
-    moduleViewList = None
 
     def __init__(self):
         windowSize = wx.DisplaySize()
         size = (800,800)
         pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
         wx.Frame.__init__(self, None, wx.ID_ANY, u"Develop Kaleidoscope", pos=pos, size=size)
-        self.addStatusBar()
+        # self.addStatusBar()
         self.addMenuBar()
         self.addModuleList()
 
@@ -29,12 +33,14 @@ class PTFrame (wx.Frame):
         menuBar = wx.MenuBar()
 
         fileMenu = wx.Menu()
-        addItem = fileMenu.Append(wx.ID_ADD, u"Add Module", u"Add Module")
+        addPodSpecItem = fileMenu.Append(wx.ID_ANY, u"Add Pod Spec", u"Add Pod Spec")
+        addModuleItem = fileMenu.Append(wx.ID_ANY, u"Add Module", u"Add Module")
 
         menuBar.Append(fileMenu, u"&File")
         self.SetMenuBar(menuBar)
 
-        self.Bind(wx.EVT_MENU, self.OnAddModule, addItem)
+        self.Bind(wx.EVT_MENU, self.OnAddPodSpec, addPodSpecItem)
+        self.Bind(wx.EVT_MENU, self.OnAddModule, addModuleItem)
 
     def addStatusBar(self):
         statusBar = wx.StatusBar(self)
@@ -42,7 +48,6 @@ class PTFrame (wx.Frame):
 
     def addModuleList(self):
         self.moduleList = PTDBManager().getModuleList()
-        self.moduleViewList = []
 
         self.modulePanel = wx.Panel(self)
 
@@ -57,11 +62,9 @@ class PTFrame (wx.Frame):
         hbx.Add((10,0))
         hbx.Add(refreshBtn, flag=wx.ALIGN_LEFT)
 
-        self.grid = wx.GridSizer(1, 5, 10, 10)
+        self.grid = wx.GridSizer(1, 4, 10, 10)
 
         #Table header
-        rowIDTip = wx.StaticText(self.modulePanel)
-        rowIDTip.SetLabelText(u"ID")
         rowNameTip = wx.StaticText(self.modulePanel)
         rowNameTip.SetLabelText(u"Module")
         rowLocalTip = wx.StaticText(self.modulePanel)
@@ -70,7 +73,7 @@ class PTFrame (wx.Frame):
         rowRemoteTip.SetLabelText(u"Remote version")
         rowOperate = wx.StaticText(self.modulePanel)
         rowOperate.SetLabelText(u"Operate")
-        self.grid.AddMany([rowIDTip, rowNameTip, rowLocalTip, rowRemoteTip, rowOperate])
+        self.grid.AddMany([rowNameTip, rowLocalTip, rowRemoteTip, rowOperate])
 
         #Table rows
         for module in self.moduleList:
@@ -84,9 +87,13 @@ class PTFrame (wx.Frame):
         #Log area
         logTip = wx.StaticText(self.modulePanel)
         logTip.SetLabelText(u"Logs: ")
+        clearBtn = wx.Button(self.modulePanel, wx.ID_ANY, u"Clear log")
+        clearBtn.Bind(wx.EVT_BUTTON, self.OnClearLog)
         hbox3 = wx.BoxSizer(wx.HORIZONTAL)
         hbox3.Add((10,0))
         hbox3.Add(logTip, flag=wx.ALIGN_LEFT)
+        hbox3.Add((10,0))
+        hbox3.Add(clearBtn, flag=wx.ALIGN_LEFT)
 
         self.logArea = wx.TextCtrl(self.modulePanel, wx.ID_ANY, style=wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_READONLY, size=(770, 400))
         hbox4 = wx.BoxSizer(wx.HORIZONTAL)
@@ -111,50 +118,69 @@ class PTFrame (wx.Frame):
     def addModule(self, module):
         self.grid.SetRows(self.grid.GetRows()+1)
 
-        idVal = wx.StaticText(self.modulePanel)
-        idVal.SetLabelText("%d" % (module.id))
-        self.grid.Add(idVal, 0, wx.EXPAND)
-        self.moduleViewList.append(idVal)
-
-        nameVal = wx.StaticText(self.modulePanel)
+        nameVal = wx.StaticText(self.modulePanel, module.id*100+1)
         nameVal.SetLabelText(module.moduleName)
         self.grid.Add(nameVal, 0, wx.EXPAND)
-        self.moduleViewList.append(nameVal)
 
-        localVal = wx.StaticText(self.modulePanel)
+        localVal = wx.StaticText(self.modulePanel, module.id*100+2)
         localVal.SetLabelText(module.localVersion)
         self.grid.Add(localVal, 0, wx.EXPAND)
-        self.moduleViewList.append(localVal)
 
-        remoteVal = wx.StaticText(self.modulePanel)
+        remoteVal = wx.StaticText(self.modulePanel, module.id*100+3)
         remoteVal.SetLabelText(module.remoteVersion)
         self.grid.Add(remoteVal, 0, wx.EXPAND)
-        self.moduleViewList.append(remoteVal)
 
-        operateBtn = wx.Button(self.modulePanel, wx.ID_ANY, u"Publish Module")
+        operateBtn = wx.Button(self.modulePanel, module.id*100+4, u"Publish Module")
         operateBtn.Bind(wx.EVT_BUTTON, self.OnPublishModule)
         operateBtn.Enable(False)
         self.grid.Add(operateBtn, 0, wx.EXPAND)
-        self.moduleViewList.append(operateBtn)
 
     def OnPublishModule(self, event):
-        print ""
+        moduleId = (event.GetEventObject().GetId()-4)/100
+
+        findModule = None
+        for module in self.moduleList:
+            if module.id == moduleId:
+                findModule = module
+                break
+        if findModule != None:
+            remoteTrunkVersion = PTModule.getModuleTrunkRemoteVersion(findModule, self.OnLogCallback)
+            if findModule.localVersion == remoteTrunkVersion:
+                self.resetOperationBtn(findModule.id, False, u"Publishing")
+                PTCommand().publishModule(findModule, self.OnLogCallback, self.OnPublishModuleCompleteCallback)
+            else:
+                wx.MessageBox(u"Module (%s) local version is %s, remote trunk version is %s" % (findModule.moduleName, findModule.localVersion, remoteTrunkVersion), u"You should commit all changes using SVN Tools.", wx.OK)
+
+    def OnLogCallback(self, message):
+        localTime = time.asctime(time.localtime(time.time()))
+        msg = "[%s]%s\n" % (localTime, message)
+        self.logArea.AppendText(msg)
+
+    def OnPublishModuleCompleteCallback(self, result, module):
+        if result == True:
+            PTModule.asyncModuleVersions([module], self.OnLogCallback, self.refreshVersionCallback)
 
     def refreshVersionsUsingThread(self):
-        PTModule.asyncModuleVersions(self.moduleList, self.refreshVersionCallback)
+        PTModule.asyncModuleVersions(self.moduleList, self.OnLogCallback, self.refreshVersionCallback)
 
     def refreshVersionCallback(self, module):
-        index = self.moduleList.index(module)*5
-        localVal = self.moduleViewList[index+2]
-        remoteVal = self.moduleViewList[index+3]
-        operateBtn = self.moduleViewList[index+4]
-
+        localVal = self.modulePanel.FindWindowById(module.id*100+2)
+        remoteVal = self.modulePanel.FindWindowById(module.id*100+3)
         localVal.SetLabelText(module.localVersion)
         remoteVal.SetLabelText(module.remoteVersion)
-        operateBtn.Enable(module.isNewer())
+        self.resetOperationBtn(module.id, module.isNewer(), u"Publish Module")
 
     def OnRefreshModuleVersions(self, event):
         self.refreshVersionsUsingThread()
+
+    def OnClearLog(self, event):
+        self.logArea.SetValue("")
+
+    def OnAddPodSpec(self, event):
+        self.addSpecFrame = PTAddSpecFrame(self.OnAddPodSpecCallback)
+
+    def OnAddPodSpecCallback(self):
+        print ""
 
     def OnAddModule(self, event):
         self.addModuleFrame = PTAddModuleFrame(self.OnAddModuleCallback)
@@ -164,3 +190,8 @@ class PTFrame (wx.Frame):
         if moduleList != None:
             self.modulePanel.Destroy()
             self.addModuleList()
+
+    def resetOperationBtn(self, moduleId, enable, text):
+        operateBtn = self.modulePanel.FindWindowById(moduleId*100+4)
+        operateBtn.SetLabelText(text)
+        operateBtn.Enable(enable)

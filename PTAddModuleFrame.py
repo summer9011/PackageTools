@@ -122,7 +122,7 @@ class PTAddModuleFrame (wx.Frame):
         module.password = self.remotePathPwd.GetValue()
         module.moduleName = os.path.basename(module.localPath)
 
-        if len(module.localVersion) > 0 and len(module.remoteVersion) > 0 and len(module.username) > 0 and len(module.password) > 0:
+        if len(module.localPath) > 0 and len(module.remotePath) > 0 and len(module.username) > 0 and len(module.password) > 0:
             PTDBManager().addNewModule([module], self.AddModuleCallback)
         else:
             wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)

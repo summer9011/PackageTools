@@ -4,6 +4,7 @@ import os
 import re
 import urllib2
 import time
+import wx
 
 asyncList = None
 
@@ -14,6 +15,7 @@ class PTModule:
     remotePath = None
     username = None
     password = None
+    specId = 0
 
     localVersion = ""
     remoteVersion = ""
@@ -47,23 +49,25 @@ class PTModule:
         return newer
 
     @classmethod
-    def asyncModuleVersions(cls, moduleList, callback):
+    def asyncModuleVersions(cls, moduleList, logCallback, resultCallback):
         if asyncList != None:
             thread.exit()
 
-        thread.start_new_thread(PTModule.getVersion, (moduleList, callback))
+        thread.start_new_thread(PTModule.getVersion, (moduleList, logCallback, resultCallback))
 
     @classmethod
-    def getVersion(cls, moduleList, callback):
+    def getVersion(cls, moduleList, logCallback, resultCallback):
         for module in moduleList:
-            local = PTModule.getModuleLocalVersion(module)
-            remote = PTModule.getModuleRemoteVersion(module)
+            local = PTModule.getModuleLocalVersion(module, logCallback)
+            remote = PTModule.getModuleTagsRemoteVersion(module, logCallback)
             module.localVersion = local
             module.remoteVersion = remote
-            callback(module)
+            resultCallback(module)
 
     @classmethod
-    def getModuleLocalVersion(cls, module):
+    def getModuleLocalVersion(cls, module, logCallback):
+        wx.CallAfter(logCallback, "\nGet local version -- url: %s\n" % module.localPath)
+
         localVersion = ""
         fileName = None
         list = os.listdir(module.localPath)
@@ -79,18 +83,24 @@ class PTModule:
                 match = re.match(r'.*s.version.*=.*\'(.*)\'', line, re.M|re.I)
                 if match:
                     localVersion = match.group(1)
+                    wx.CallAfter(logCallback, "\nGet local version -- version %s\n" % localVersion)
                     break
                 line = f.readline()
             f.close()
+        else:
+            wx.CallAfter(logCallback, "\nGet local version -- Can't find local version.\n")
+
         return localVersion
 
     @classmethod
-    def getModuleRemoteVersion(cls, module):
+    def getModuleTagsRemoteVersion(cls, module, logCallback):
         try:
-            remoteVersion = ""
+            remoteVersion = "0"
             lastTimestamp = 0
 
             tagPath = "%s/tags" % module.remotePath
+            wx.CallAfter(logCallback, "\nGet remote tags version -- url: %s\n" % tagPath)
+
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
             password_mgr.add_password(None, tagPath, module.username, module.password)
             handler = urllib2.HTTPBasicAuthHandler(password_mgr)
@@ -108,9 +118,6 @@ class PTModule:
                     serverVersion = match.group(1)
                     onePath = "%s/%s" % (tagPath, serverVersion)
                     tagRet = urllib2.urlopen(onePath)
-
-                    print onePath
-
                     lastModifiedStr = tagRet.info().getheader('Last-Modified')
                     tmpTime = time.strptime(lastModifiedStr, "%a, %d %b %Y %H:%M:%S %Z")
                     tmpTimestamp = int(time.mktime(tmpTime))
@@ -120,6 +127,42 @@ class PTModule:
                         remoteVersion = serverVersion
 
                 line = ret.readline()
+
+            wx.CallAfter(logCallback, "\nGet remote tags version -- version %s\n" % remoteVersion)
+
             return remoteVersion
-        except:
+        except Exception as e:
+            wx.CallAfter(logCallback, "\nGet remote tags version -- %s\n" % e)
+            return ""
+
+    @classmethod
+    def getModuleTrunkRemoteVersion(cls, module, logCallback):
+        try:
+            remoteTrunkVersion = ""
+
+            trunkSpecPath = "%s/trunk/%s.podspec" % (module.remotePath, module.moduleName)
+            wx.CallAfter(logCallback, "\nGet remote trunk version -- url: %s\n" % trunkSpecPath)
+
+            password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            password_mgr.add_password(None, trunkSpecPath, module.username, module.password)
+            handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+
+            opener = urllib2.build_opener(handler)
+            opener.open(trunkSpecPath)
+            urllib2.install_opener(opener)
+
+            ret = urllib2.urlopen(trunkSpecPath)
+
+            line = ret.readline()
+            while line:
+                match = re.match(r'.*s.version.*=.*\'(.*)\'', line, re.M|re.I)
+                if match:
+                    remoteTrunkVersion = match.group(1)
+                    wx.CallAfter(logCallback, "\nGet remote trunk version -- version %s\n" % remoteTrunkVersion)
+                    break
+                line = ret.readline()
+
+            return remoteTrunkVersion
+        except Exception as e:
+            wx.CallAfter(logCallback, "\nGet remote trunk version -- %s\n" % e)
             return ""
