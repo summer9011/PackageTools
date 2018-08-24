@@ -25,8 +25,7 @@ class PTFrame (wx.Frame):
     def __init__(self):
         windowSize = wx.DisplaySize()
         size = (1000, 600)
-        pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
-        wx.Frame.__init__(self, None, wx.ID_ANY, u"Develop Kaleidoscope", pos=pos, size=size)
+        wx.Frame.__init__(self, None, wx.ID_ANY, u"Develop Kaleidoscope", pos=(100,100), size=size)
 
         self.SetMinSize(size)
 
@@ -40,9 +39,13 @@ class PTFrame (wx.Frame):
 
         showLog = wx.Button(self.panel, wx.ID_ANY, u"Logger")
         showLog.Bind(wx.EVT_BUTTON, self.OnDisplayLogger)
+        testPod = wx.Button(self.panel, wx.ID_ANY, u"Test Pod Command")
+        testPod.Bind(wx.EVT_BUTTON, self.OnTestPodCommand)
         hbx = wx.BoxSizer(wx.HORIZONTAL)
         hbx.Add((10,0))
         hbx.Add(showLog, flag=wx.ALIGN_LEFT)
+        hbx.Add((10,0))
+        hbx.Add(testPod, flag=wx.ALIGN_LEFT)
 
         self.vbx.Add((0,10))
         self.vbx.Add(hbx, flag=wx.ALIGN_LEFT)
@@ -76,7 +79,7 @@ class PTFrame (wx.Frame):
         hbx.Add((10,0))
         hbx.Add(listName, flag=wx.ALIGN_LEFT)
 
-        self.repoGrid = wx.GridSizer(1, 3, 10, 10)
+        self.repoGrid = wx.GridSizer(1, 4, 10, 10)
 
         #Table header
         rowNameTip = wx.StaticText(self.panel)
@@ -84,8 +87,10 @@ class PTFrame (wx.Frame):
         rowRemoteTip = wx.StaticText(self.panel)
         rowRemoteTip.SetLabelText(u"Remote path")
         rowOperate = wx.StaticText(self.panel)
-        rowOperate.SetLabelText(u"Operate")
-        self.repoGrid.AddMany([rowNameTip, rowRemoteTip, rowOperate])
+        rowOperate.SetLabelText(u"Operate 1")
+        rowDelete = wx.StaticText(self.panel)
+        rowDelete.SetLabelText(u"Operate 2")
+        self.repoGrid.AddMany([rowNameTip, rowRemoteTip, rowOperate, rowDelete])
 
         for repo in self.repoList:
             self.addRepo(repo)
@@ -116,8 +121,26 @@ class PTFrame (wx.Frame):
         operateBtn.Enable(False)
         self.repoGrid.Add(operateBtn, 0, wx.EXPAND)
 
-    def OnRepoOperate(self):
+        deleteBtn = wx.Button(self.panel, repo.id, u"Delete")
+        deleteBtn.Bind(wx.EVT_BUTTON, self.OnDeleteRepo)
+        deleteBtn.Enable(True)
+        self.repoGrid.Add(deleteBtn, 0, wx.EXPAND)
+
+    def OnRepoOperate(self, event):
         print "repo operation"
+
+    def OnDeleteRepo(self, event):
+        repoId = event.GetEventObject().GetId()
+
+        findRepo = None
+        for repo in self.repoList:
+            if repo.id == repoId:
+                findRepo = repo
+                break
+        if findRepo != None:
+            PTDBManager().deleteSpecRepo(findRepo)
+            self.panel.Destroy()
+            self.resetViews()
 
     def addModuleList(self):
         self.moduleList = PTDBManager().getModuleList()
@@ -169,11 +192,11 @@ class PTFrame (wx.Frame):
     def addModule(self, module):
         self.moduleGrid.SetRows(self.moduleGrid.GetRows()+1)
 
-        nameVal = wx.StaticText(self.panel, module.id*100)
+        nameVal = wx.StaticText(self.panel, module.id*1000)
         nameVal.SetLabelText(module.moduleName)
         self.moduleGrid.Add(nameVal, 0, wx.EXPAND)
 
-        repoVal = wx.StaticText(self.panel, module.id*100+1)
+        repoVal = wx.StaticText(self.panel, module.id*1000+1)
         repoSpec = PTDBManager().getSpecRepo(module.repoId)
         repoText = ""
         if repoSpec.repoName != None:
@@ -181,26 +204,26 @@ class PTFrame (wx.Frame):
         repoVal.SetLabelText(repoText)
         self.moduleGrid.Add(repoVal, 0, wx.EXPAND)
 
-        localVal = wx.StaticText(self.panel, module.id*100+2)
+        localVal = wx.StaticText(self.panel, module.id*1000+2)
         localVal.SetLabelText(module.localVersion)
         self.moduleGrid.Add(localVal, 0, wx.EXPAND)
 
-        remoteVal = wx.StaticText(self.panel, module.id*100+3)
+        remoteVal = wx.StaticText(self.panel, module.id*1000+3)
         remoteVal.SetLabelText(module.remoteVersion)
         self.moduleGrid.Add(remoteVal, 0, wx.EXPAND)
 
-        operateBtn = wx.Button(self.panel, module.id*100+4, u"Publish Module")
+        operateBtn = wx.Button(self.panel, module.id*1000+4, u"Publish Module")
         operateBtn.Bind(wx.EVT_BUTTON, self.OnPublishModule)
         operateBtn.Enable(False)
         self.moduleGrid.Add(operateBtn, 0, wx.EXPAND)
 
-        deleteBtn = wx.Button(self.panel, module.id*100+5, u"Delete")
+        deleteBtn = wx.Button(self.panel, module.id*1000+5, u"Delete")
         deleteBtn.Bind(wx.EVT_BUTTON, self.OnDeleteModule)
         deleteBtn.Enable(True)
         self.moduleGrid.Add(deleteBtn, 0, wx.EXPAND)
 
     def OnDeleteModule(self, event):
-        moduleId = (event.GetEventObject().GetId()-4)/100
+        moduleId = (event.GetEventObject().GetId()-4)/1000
 
         findModule = None
         for module in self.moduleList:
@@ -213,7 +236,7 @@ class PTFrame (wx.Frame):
             self.resetViews()
 
     def OnPublishModule(self, event):
-        moduleId = (event.GetEventObject().GetId()-4)/100
+        moduleId = (event.GetEventObject().GetId()-4)/1000
 
         findModule = None
         for module in self.moduleList:
@@ -242,8 +265,8 @@ class PTFrame (wx.Frame):
         PTModule.asyncModuleVersions(self.moduleList, self.OnLogCallback, self.refreshVersionCallback)
 
     def refreshVersionCallback(self, module):
-        localVal = self.panel.FindWindowById(module.id*100+2)
-        remoteVal = self.panel.FindWindowById(module.id*100+3)
+        localVal = self.panel.FindWindowById(module.id*1000+2)
+        remoteVal = self.panel.FindWindowById(module.id*1000+3)
         localVal.SetLabelText(module.localVersion)
         remoteVal.SetLabelText(module.remoteVersion)
         self.resetOperationBtn(module.id, module.isNewer(), u"Publish Module")
@@ -273,7 +296,7 @@ class PTFrame (wx.Frame):
             self.resetViews()
 
     def resetOperationBtn(self, moduleId, enable, text):
-        operateBtn = self.panel.FindWindowById(moduleId*100+4)
+        operateBtn = self.panel.FindWindowById(moduleId*1000+4)
         operateBtn.SetLabelText(text)
         operateBtn.Enable(enable)
 
@@ -294,3 +317,6 @@ class PTFrame (wx.Frame):
     def OnDestoryLogFrame(self, event):
         self.logFrame.Destroy()
         self.logFrame = None
+
+    def OnTestPodCommand(self, event):
+        PTCommand().testPodCommand(self.OnLogCallback)

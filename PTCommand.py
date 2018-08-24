@@ -30,7 +30,7 @@ class PTCommand:
         if copyRet == 0:
             repoInfo = PTDBManager().getSpecRepo(module.repoId)
             if repoInfo != None:
-                podPush = "cd %s; pod repo-svn push %s %s.podspec" % (module.localPath, repoInfo.repoName, module.moduleName)
+                podPush = "cd %s; /usr/local/bin/pod repo-svn push %s %s.podspec" % (module.localPath, repoInfo.repoName, module.moduleName)
                 self.logCommand(podPush, logCallback)
                 pushRet, pushOutput = commands.getstatusoutput(podPush)
                 self.logOutput(pushRet, pushOutput, logCallback)
@@ -52,11 +52,17 @@ class PTCommand:
         thread.start_new_thread(self.addSpecRepoWithShell, (specRepo, logCallback, completeCallback))
 
     def addSpecRepoWithShell(self, specRepo, logCallback, completeCallback):
-        addRepo = "pod repo-svn add %s %s" % (specRepo.repoName, specRepo.remotePath)
+        addRepo = "/usr/local/bin/pod repo-svn add %s %s" % (specRepo.repoName, specRepo.remotePath)
         self.logCommand(addRepo, logCallback)
         copyRet, copyOutput = commands.getstatusoutput(addRepo)
         self.logOutput(copyRet, copyOutput, logCallback)
         wx.CallAfter(completeCallback, specRepo)
+
+    def testPodCommand(self, logCallback):
+        testPod = "echo $HOME; echo `pwd`; cd $HOME; /usr/local/bin/pod --version"
+        self.logCommand(testPod, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(testPod)
+        self.logOutput(copyRet, copyOutput, logCallback)
 
     def logCommand(self, command, callback):
         wx.CallAfter(callback, "\n=====  %s  =====\n" % command)

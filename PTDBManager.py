@@ -127,3 +127,9 @@ class PTDBManager:
         specRepo.id = self.dbCursor.lastrowid
         self.dbConnect.commit()
         callback(specRepo)
+
+    def deleteSpecRepo(self, repo):
+        self.openDB()
+        self.dbCursor.execute("delete from pt_spec_repo where id = %d;" % repo.id)
+        self.dbConnect.commit()
+        return True
