@@ -94,7 +94,7 @@ class PTDBManager:
 
     def getSpecRepo(self, repoId):
         self.openDB()
-        self.dbCursor.execute("select * form pt_spec_repo where id = %d;" % repoId)
+        self.dbCursor.execute("select * from pt_spec_repo where id = %d;" % repoId)
         result = self.dbCursor.fetchone()
         if result != None:
             repo = PTSpecRepo()

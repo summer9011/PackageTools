@@ -17,16 +17,24 @@ class PTAddModuleFrame (wx.Frame):
     remotePathPwdTip = None
     remotePathPwd = None
 
+    repoTip = None
+    repoChoice = None
+
     addBtn = None
 
     callback = None
 
-    def __init__(self, callback):
+    repoList = None
+    selectedRepo = None
+
+    def __init__(self, callback, repoList):
         windowSize = wx.DisplaySize()
 
-        size = (600,300)
+        size = (600,400)
         pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
         wx.Frame.__init__(self, None, wx.ID_ANY, u"Add module", pos=pos, size=size)
+
+        self.repoList = repoList
 
         # Local path
         self.localPathTip = wx.StaticText(self)
@@ -82,6 +90,22 @@ class PTAddModuleFrame (wx.Frame):
         pwdBox.Add(self.remotePathPwd, flag=wx.ALIGN_RIGHT)
         pwdBox.Add((10, 0))
 
+        # Repo
+        self.repoTip = wx.StaticText(self)
+        self.repoTip.SetLabelText(u"Repo :")
+        tipBox3 = wx.BoxSizer(wx.HORIZONTAL)
+        tipBox3.Add((10, 0))
+        tipBox3.Add(self.repoTip, flag=wx.ALIGN_LEFT)
+
+        repoChoiceList = ['None']
+        for repo in repoList:
+            repoChoiceList.append(repo.repoName)
+        self.repoChoice = wx.Choice(self, wx.ID_ANY, choices=repoChoiceList, name=u"Repo list")
+        self.repoChoice.Bind(wx.EVT_CHOICE, self.OnChoiceRepo)
+        choiceBox = wx.BoxSizer(wx.HORIZONTAL)
+        choiceBox.Add((10, 0))
+        choiceBox.Add(self.repoChoice, flag=wx.ALIGN_LEFT)
+
         # Add btn
         self.addBtn = wx.Button(self, wx.ID_ANY, u"Add")
         self.addBtn.Bind(wx.EVT_BUTTON, self.OnAddModule)
@@ -101,6 +125,10 @@ class PTAddModuleFrame (wx.Frame):
         vboxer.Add(userBox, flag=wx.ALIGN_LEFT)
         vboxer.Add((0, 10))
         vboxer.Add(pwdBox, flag=wx.ALIGN_LEFT)
+        vboxer.Add((0, 20))
+        vboxer.Add(tipBox3, flag=wx.ALIGN_LEFT)
+        vboxer.Add((0, 10))
+        vboxer.Add(choiceBox, flag=wx.ALIGN_LEFT)
         vboxer.Add((0, 30))
         vboxer.Add(addBtnBox, flag=wx.ALIGN_CENTER)
 
@@ -108,6 +136,14 @@ class PTAddModuleFrame (wx.Frame):
         self.Show(True)
 
         self.callback = callback
+
+    def OnChoiceRepo(self, event):
+        findRepo = None
+        for repo in self.repoList:
+            if repo.repoName == event.String:
+                findRepo = repo
+                break
+        self.selectedRepo = findRepo
 
     def OnChooseDirectory(self, event):
         dirDlg = wx.DirDialog(self, u"Choose directory", os.path.expanduser('~'), wx.DD_DEFAULT_STYLE)
@@ -121,8 +157,12 @@ class PTAddModuleFrame (wx.Frame):
         module.username = self.remotePathUser.GetValue()
         module.password = self.remotePathPwd.GetValue()
         module.moduleName = os.path.basename(module.localPath)
+        if self.selectedRepo != None:
+            module.repoId = self.selectedRepo.id
+        else:
+            module.repoId = 0
 
-        if len(module.localPath) > 0 and len(module.remotePath) > 0 and len(module.username) > 0 and len(module.password) > 0:
+        if len(module.localPath) > 0 and len(module.remotePath) > 0 and len(module.username) > 0 and len(module.password) > 0 and module.repoId > 0:
             PTDBManager().addNewModule([module], self.AddModuleCallback)
         else:
             wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)

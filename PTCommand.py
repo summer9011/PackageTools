@@ -22,8 +22,6 @@ class PTCommand:
         thread.start_new_thread(self.publishModuleWithShell, (module, logCallback, completeCallback))
 
     def publishModuleWithShell(self, module, logCallback, completeCallback):
-        os.chdir(module.localPath)
-
         svnCopyToTag = "svn copy %s/trunk %s/tags/%s -m \"release to %s\"" % (module.remotePath, module.remotePath, module.localVersion, module.localVersion)
         self.logCommand(svnCopyToTag, logCallback)
         copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
@@ -32,7 +30,7 @@ class PTCommand:
         if copyRet == 0:
             repoInfo = PTDBManager().getSpecRepo(module.repoId)
             if repoInfo != None:
-                podPush = "pod repo-svn push %s %s.podspec" % (repoInfo.repoName, module.moduleName)
+                podPush = "cd %s; pod repo-svn push %s %s.podspec" % (module.localPath, repoInfo.repoName, module.moduleName)
                 self.logCommand(podPush, logCallback)
                 pushRet, pushOutput = commands.getstatusoutput(podPush)
                 self.logOutput(pushRet, pushOutput, logCallback)
@@ -51,8 +49,14 @@ class PTCommand:
             wx.CallAfter(completeCallback, False, module)
 
     def addSpecRepo(self, specRepo, logCallback, completeCallback):
-        addRepo = ""
-        print "add repo to command"
+        thread.start_new_thread(self.addSpecRepoWithShell, (specRepo, logCallback, completeCallback))
+
+    def addSpecRepoWithShell(self, specRepo, logCallback, completeCallback):
+        addRepo = "pod repo-svn add %s %s" % (specRepo.repoName, specRepo.remotePath)
+        self.logCommand(addRepo, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(addRepo)
+        self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(completeCallback, specRepo)
 
     def logCommand(self, command, callback):
         wx.CallAfter(callback, "\n=====  %s  =====\n" % command)

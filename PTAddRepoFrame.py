@@ -73,6 +73,7 @@ class PTAddRepoFrame (wx.Frame):
         repo.repoName = self.repoNameText.GetValue()
         repo.remotePath = self.repoPathText.GetValue()
         if len(repo.repoName) > 0 and len(repo.remotePath) > 0:
+            self.addBtn.Enable(False)
             PTDBManager().addNewSpecRepo(repo, self.AddRepoCallback)
         else:
             wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)

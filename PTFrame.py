@@ -3,51 +3,55 @@ import wx
 import time
 from PTAddModuleFrame import PTAddModuleFrame
 from PTAddRepoFrame import PTAddRepoFrame
+from PTLogFrame import PTLogFrame
 from PTDBManager import PTDBManager
 from PTModule import PTModule
 from PTCommand import PTCommand
 
 class PTFrame (wx.Frame):
     addRepoFrame = None
-    repoPanel = None
-    repoGrid = None
-    repoList = None
-
     addModuleFrame = None
-    modulePanel = None
-    moduleGrid = None
+    logFrame = None
+
+    repoList = None
     moduleList = None
 
-    logPanel = None
-    logArea = None
-
+    panel = None
     vbx = None
-    repVbox = None
-    moduleVbox = None
-    logVobx = None
+
+    repoGrid = None
+    moduleGrid = None
 
     def __init__(self):
         windowSize = wx.DisplaySize()
-        size = (800,1000)
+        size = (1000, 600)
         pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
         wx.Frame.__init__(self, None, wx.ID_ANY, u"Develop Kaleidoscope", pos=pos, size=size)
 
+        self.SetMinSize(size)
+
         self.addMenuBar()
+        self.resetViews()
+        self.Show(True)
+
+    def resetViews(self):
+        self.panel = wx.Panel(self)
+        self.vbx = wx.BoxSizer(wx.VERTICAL)
+
+        showLog = wx.Button(self.panel, wx.ID_ANY, u"Logger")
+        showLog.Bind(wx.EVT_BUTTON, self.OnDisplayLogger)
+        hbx = wx.BoxSizer(wx.HORIZONTAL)
+        hbx.Add((10,0))
+        hbx.Add(showLog, flag=wx.ALIGN_LEFT)
+
+        self.vbx.Add((0,10))
+        self.vbx.Add(hbx, flag=wx.ALIGN_LEFT)
+
         self.addRepoList()
         self.addModuleList()
-        self.addLogArea()
 
-        self.vbx = wx.BoxSizer(wx.VERTICAL)
-        self.vbx.Add(self.repoVbx)
-        self.vbx.Add((0, 10))
-        self.vbx.Add(self.moduleVbox)
-        self.vbx.Add((0, 10))
-        self.vbx.Add(self.logVobx)
-
-        self.SetSizer(self.vbx)
-        self.Fit()
-
-        self.Show(True)
+        self.panel.SetSizer(self.vbx)
+        self.panel.Fit()
 
     def addMenuBar(self):
         menuBar = wx.MenuBar()
@@ -65,29 +69,63 @@ class PTFrame (wx.Frame):
     def addRepoList(self):
         self.repoList = PTDBManager().getRepoList()
 
-        self.repoPanel = wx.Panel(self)
         #Tip
-        listName = wx.StaticText(self.repoPanel)
+        listName = wx.StaticText(self.panel)
         listName.SetLabelText(u"Repo List")
         hbx = wx.BoxSizer(wx.HORIZONTAL)
         hbx.Add((10,0))
         hbx.Add(listName, flag=wx.ALIGN_LEFT)
 
-        self.repoVbx = wx.BoxSizer(wx.VERTICAL)
-        self.repoVbx.Add((0,30))
-        self.repoVbx.Add(hbx, flag=wx.ALIGN_LEFT)
+        self.repoGrid = wx.GridSizer(1, 3, 10, 10)
 
-        self.repoPanel.SetSizer(self.repoVbx)
-        self.repoPanel.Fit()
+        #Table header
+        rowNameTip = wx.StaticText(self.panel)
+        rowNameTip.SetLabelText(u"Repo name")
+        rowRemoteTip = wx.StaticText(self.panel)
+        rowRemoteTip.SetLabelText(u"Remote path")
+        rowOperate = wx.StaticText(self.panel)
+        rowOperate.SetLabelText(u"Operate")
+        self.repoGrid.AddMany([rowNameTip, rowRemoteTip, rowOperate])
+
+        for repo in self.repoList:
+            self.addRepo(repo)
+
+        hbx2 = wx.BoxSizer(wx.HORIZONTAL)
+        hbx2.Add((10,0))
+        hbx2.Add(self.repoGrid, flag=wx.ALIGN_CENTER)
+        hbx2.Add((10,0))
+
+        self.vbx.Add((0,30))
+        self.vbx.Add(hbx, flag=wx.ALIGN_LEFT)
+        self.vbx.Add((0,20))
+        self.vbx.Add(hbx2, flag=wx.ALIGN_LEFT)
+
+    def addRepo(self, repo):
+        self.repoGrid.SetRows(self.repoGrid.GetRows()+1)
+
+        nameVal = wx.StaticText(self.panel, wx.ID_ANY)
+        nameVal.SetLabelText(repo.repoName)
+        self.repoGrid.Add(nameVal, 0, wx.EXPAND)
+
+        remoteVal = wx.StaticText(self.panel, wx.ID_ANY)
+        remoteVal.SetLabelText(repo.remotePath)
+        self.repoGrid.Add(remoteVal, 0, wx.EXPAND)
+
+        operateBtn = wx.Button(self.panel, wx.ID_ANY, u"None")
+        operateBtn.Bind(wx.EVT_BUTTON, self.OnRepoOperate)
+        operateBtn.Enable(False)
+        self.repoGrid.Add(operateBtn, 0, wx.EXPAND)
+
+    def OnRepoOperate(self):
+        print "repo operation"
 
     def addModuleList(self):
         self.moduleList = PTDBManager().getModuleList()
 
-        self.modulePanel = wx.Panel(self)
         #Tip
-        listName = wx.StaticText(self.modulePanel)
+        listName = wx.StaticText(self.panel)
         listName.SetLabelText(u"Module List")
-        refreshBtn = wx.Button(self.modulePanel, wx.ID_ANY, u"Refresh versions")
+        refreshBtn = wx.Button(self.panel, wx.ID_ANY, u"Refresh versions")
         refreshBtn.Bind(wx.EVT_BUTTON, self.OnRefreshModuleVersions)
         hbx = wx.BoxSizer(wx.HORIZONTAL)
         hbx.Add((10,0))
@@ -95,20 +133,22 @@ class PTFrame (wx.Frame):
         hbx.Add((10,0))
         hbx.Add(refreshBtn, flag=wx.ALIGN_LEFT)
 
-        self.moduleGrid = wx.GridSizer(1, 5, 10, 10)
+        self.moduleGrid = wx.GridSizer(1, 6, 10, 10)
 
         #Table header
-        rowNameTip = wx.StaticText(self.modulePanel)
+        rowNameTip = wx.StaticText(self.panel)
         rowNameTip.SetLabelText(u"Module")
-        rowRepoSpecTip = wx.StaticText(self.modulePanel)
+        rowRepoSpecTip = wx.StaticText(self.panel)
         rowRepoSpecTip.SetLabelText(u"Repo")
-        rowLocalTip = wx.StaticText(self.modulePanel)
+        rowLocalTip = wx.StaticText(self.panel)
         rowLocalTip.SetLabelText(u"Local version")
-        rowRemoteTip = wx.StaticText(self.modulePanel)
+        rowRemoteTip = wx.StaticText(self.panel)
         rowRemoteTip.SetLabelText(u"Remote version")
-        rowOperate = wx.StaticText(self.modulePanel)
-        rowOperate.SetLabelText(u"Operate")
-        self.moduleGrid.AddMany([rowNameTip, rowRepoSpecTip, rowLocalTip, rowRemoteTip, rowOperate])
+        rowOperate = wx.StaticText(self.panel)
+        rowOperate.SetLabelText(u"Operate 1")
+        rowDelete = wx.StaticText(self.panel)
+        rowDelete.SetLabelText(u"Operate 2")
+        self.moduleGrid.AddMany([rowNameTip, rowRepoSpecTip, rowLocalTip, rowRemoteTip, rowOperate, rowDelete])
 
         #Table rows
         for module in self.moduleList:
@@ -119,24 +159,21 @@ class PTFrame (wx.Frame):
         hbx2.Add(self.moduleGrid, flag=wx.ALIGN_CENTER)
         hbx2.Add((10,0))
 
-        self.moduleVbox = wx.BoxSizer(wx.VERTICAL)
-        self.moduleVbox.Add((0,30))
-        self.moduleVbox.Add(hbx, flag=wx.ALIGN_LEFT)
-        self.moduleVbox.Add((0,20))
-        self.moduleVbox.Add(hbx2, flag=wx.ALIGN_LEFT)
+        self.vbx.Add((0,30))
+        self.vbx.Add(hbx, flag=wx.ALIGN_LEFT)
+        self.vbx.Add((0,20))
+        self.vbx.Add(hbx2, flag=wx.ALIGN_LEFT)
 
-        self.modulePanel.SetSizer(self.moduleVbox)
-        self.modulePanel.Fit()
         self.refreshVersionsUsingThread()
 
     def addModule(self, module):
         self.moduleGrid.SetRows(self.moduleGrid.GetRows()+1)
 
-        nameVal = wx.StaticText(self.modulePanel, module.id*100)
+        nameVal = wx.StaticText(self.panel, module.id*100)
         nameVal.SetLabelText(module.moduleName)
         self.moduleGrid.Add(nameVal, 0, wx.EXPAND)
 
-        repoVal = wx.StaticText(self.modulePanel, module.id*100+1)
+        repoVal = wx.StaticText(self.panel, module.id*100+1)
         repoSpec = PTDBManager().getSpecRepo(module.repoId)
         repoText = ""
         if repoSpec.repoName != None:
@@ -144,47 +181,36 @@ class PTFrame (wx.Frame):
         repoVal.SetLabelText(repoText)
         self.moduleGrid.Add(repoVal, 0, wx.EXPAND)
 
-        localVal = wx.StaticText(self.modulePanel, module.id*100+2)
+        localVal = wx.StaticText(self.panel, module.id*100+2)
         localVal.SetLabelText(module.localVersion)
         self.moduleGrid.Add(localVal, 0, wx.EXPAND)
 
-        remoteVal = wx.StaticText(self.modulePanel, module.id*100+3)
+        remoteVal = wx.StaticText(self.panel, module.id*100+3)
         remoteVal.SetLabelText(module.remoteVersion)
         self.moduleGrid.Add(remoteVal, 0, wx.EXPAND)
 
-        operateBtn = wx.Button(self.modulePanel, module.id*100+4, u"Publish Module")
+        operateBtn = wx.Button(self.panel, module.id*100+4, u"Publish Module")
         operateBtn.Bind(wx.EVT_BUTTON, self.OnPublishModule)
         operateBtn.Enable(False)
         self.moduleGrid.Add(operateBtn, 0, wx.EXPAND)
 
-    def addLogArea(self):
-        self.logPanel = wx.Panel(self)
+        deleteBtn = wx.Button(self.panel, module.id*100+5, u"Delete")
+        deleteBtn.Bind(wx.EVT_BUTTON, self.OnDeleteModule)
+        deleteBtn.Enable(True)
+        self.moduleGrid.Add(deleteBtn, 0, wx.EXPAND)
 
-        #Log area
-        logTip = wx.StaticText(self.logPanel)
-        logTip.SetLabelText(u"Logs: ")
-        clearBtn = wx.Button(self.logPanel, wx.ID_ANY, u"Clear log")
-        clearBtn.Bind(wx.EVT_BUTTON, self.OnClearLog)
-        hbox3 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox3.Add((10,0))
-        hbox3.Add(logTip, flag=wx.ALIGN_LEFT)
-        hbox3.Add((10,0))
-        hbox3.Add(clearBtn, flag=wx.ALIGN_LEFT)
+    def OnDeleteModule(self, event):
+        moduleId = (event.GetEventObject().GetId()-4)/100
 
-        self.logArea = wx.TextCtrl(self.logPanel, wx.ID_ANY, style=wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_READONLY, size=(770, 400))
-        hbox4 = wx.BoxSizer(wx.HORIZONTAL)
-        hbox4.Add((10,0))
-        hbox4.Add(self.logArea, flag=wx.ALIGN_CENTER)
-        hbox4.Add((10,0))
-
-        self.logVobx = wx.BoxSizer(wx.VERTICAL)
-        self.logVobx.Add((0,30))
-        self.logVobx.Add(hbox3, flag=wx.ALIGN_LEFT)
-        self.logVobx.Add((0,10))
-        self.logVobx.Add(hbox4, flag=wx.ALIGN_LEFT)
-
-        self.logPanel.SetSizer(self.logVobx)
-        self.logPanel.Fit()
+        findModule = None
+        for module in self.moduleList:
+            if module.id == moduleId:
+                findModule = module
+                break
+        if findModule != None:
+            PTDBManager().deleteModule(findModule)
+            self.panel.Destroy()
+            self.resetViews()
 
     def OnPublishModule(self, event):
         moduleId = (event.GetEventObject().GetId()-4)/100
@@ -203,9 +229,10 @@ class PTFrame (wx.Frame):
                 wx.MessageBox(u"Module (%s) local version is %s, remote trunk version is %s" % (findModule.moduleName, findModule.localVersion, remoteTrunkVersion), u"You should commit all changes using SVN Tools.", wx.OK)
 
     def OnLogCallback(self, message):
-        localTime = time.asctime(time.localtime(time.time()))
-        msg = "[%s]%s\n" % (localTime, message)
-        self.logArea.AppendText(msg)
+        self.createLogFrame()
+        if self.logFrame.Shown == False:
+            self.logFrame.Show(True)
+        self.logFrame.appendText(message)
 
     def OnPublishModuleCompleteCallback(self, result, module):
         if result == True:
@@ -215,17 +242,14 @@ class PTFrame (wx.Frame):
         PTModule.asyncModuleVersions(self.moduleList, self.OnLogCallback, self.refreshVersionCallback)
 
     def refreshVersionCallback(self, module):
-        localVal = self.modulePanel.FindWindowById(module.id*100+2)
-        remoteVal = self.modulePanel.FindWindowById(module.id*100+3)
+        localVal = self.panel.FindWindowById(module.id*100+2)
+        remoteVal = self.panel.FindWindowById(module.id*100+3)
         localVal.SetLabelText(module.localVersion)
         remoteVal.SetLabelText(module.remoteVersion)
         self.resetOperationBtn(module.id, module.isNewer(), u"Publish Module")
 
     def OnRefreshModuleVersions(self, event):
         self.refreshVersionsUsingThread()
-
-    def OnClearLog(self, event):
-        self.logArea.SetValue("")
 
     def OnAddSpecRepo(self, event):
         self.addRepoFrame = PTAddRepoFrame(self.OnAddSpecRepoCallback)
@@ -236,19 +260,37 @@ class PTFrame (wx.Frame):
     def OnAddSpecRepoToPodCallback(self, repo):
         self.addRepoFrame.Destroy()
         if repo != None:
-            self.repoPanel.Destroy()
-            self.addRepoList()
+            self.panel.Destroy()
+            self.resetViews()
 
     def OnAddModule(self, event):
-        self.addModuleFrame = PTAddModuleFrame(self.OnAddModuleCallback)
+        self.addModuleFrame = PTAddModuleFrame(self.OnAddModuleCallback, self.repoList)
 
     def OnAddModuleCallback(self, moduleList):
         self.addModuleFrame.Destroy()
         if moduleList != None:
-            self.modulePanel.Destroy()
-            self.addModuleList()
+            self.panel.Destroy()
+            self.resetViews()
 
     def resetOperationBtn(self, moduleId, enable, text):
-        operateBtn = self.modulePanel.FindWindowById(moduleId*100+4)
+        operateBtn = self.panel.FindWindowById(moduleId*100+4)
         operateBtn.SetLabelText(text)
         operateBtn.Enable(enable)
+
+    def OnDisplayLogger(self, event):
+        self.createLogFrame()
+        if self.logFrame.Shown == True:
+            self.logFrame.Show(False)
+        else:
+            self.logFrame.Show(True)
+
+    def createLogFrame(self):
+        if self.logFrame == None:
+            pos = self.GetPosition()
+            size = self.GetSize()
+            self.logFrame = PTLogFrame((pos[0]+size[0], pos[1]))
+            self.logFrame.Bind(wx.EVT_CLOSE, self.OnDestoryLogFrame)
+
+    def OnDestoryLogFrame(self, event):
+        self.logFrame.Destroy()
+        self.logFrame = None
