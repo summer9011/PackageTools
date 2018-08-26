@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 import commands
-import os
 import thread
 import wx
 from PTDBManager import PTDBManager
-from PTModule import PTModule
-from PTSpecRepo import PTSpecRepo
 
 class PTCommand:
     __instance = None
@@ -36,16 +33,16 @@ class PTCommand:
                 self.logOutput(pushRet, pushOutput, logCallback)
 
                 if pushRet == 0:
-                    wx.CallAfter(logCallback, "\npublish module %s successfully!!!\n" % module.moduleName)
+                    wx.CallAfter(logCallback, "publish module %s successfully!!!\n" % module.moduleName)
                     wx.CallAfter(completeCallback, True, module)
                 else:
-                    wx.CallAfter(logCallback, "\npush %s's podspec to repo failed!!!\n" % module.moduleName)
+                    wx.CallAfter(logCallback, "push %s's podspec to repo failed!!!\n" % module.moduleName)
                     wx.CallAfter(completeCallback, False, module)
             else:
-                wx.CallAfter(logCallback, "\npodspec repo not exist!!!\n")
+                wx.CallAfter(logCallback, "podspec repo not exist!!!\n")
                 wx.CallAfter(completeCallback, False, module)
         else:
-            wx.CallAfter(logCallback, "\ncopy module %s trunk to tags error!!!\n" % module.moduleName)
+            wx.CallAfter(logCallback, "copy module %s trunk to tags error!!!\n" % module.moduleName)
             wx.CallAfter(completeCallback, False, module)
 
     def addSpecRepo(self, specRepo, logCallback, completeCallback):
@@ -58,14 +55,20 @@ class PTCommand:
         self.logOutput(copyRet, copyOutput, logCallback)
         wx.CallAfter(completeCallback, specRepo)
 
-    def testPodCommand(self, logCallback):
+    # Check pod command
+    def checkPodCommand(self, logCallback, completeCallback):
+        thread.start_new_thread(self.checkPodCommandWithShell, (logCallback, completeCallback))
+
+    def checkPodCommandWithShell(self, logCallback, completeCallback):
         testPod = "echo $HOME; echo `pwd`; cd $HOME; /usr/local/bin/pod --version"
         self.logCommand(testPod, logCallback)
         copyRet, copyOutput = commands.getstatusoutput(testPod)
         self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(completeCallback, True)
 
+    # log caller
     def logCommand(self, command, callback):
-        wx.CallAfter(callback, "\n=====  %s  =====\n" % command)
+        wx.CallAfter(callback, "%s\n" % command)
 
     def logOutput(self, stats, output, callback):
         wx.CallAfter(callback, "status : %s\n" % stats)

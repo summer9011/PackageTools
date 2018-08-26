@@ -5,7 +5,6 @@ import re
 import urllib2
 import time
 import wx
-import PTSpecRepo
 
 asyncList = None
 
@@ -20,6 +19,8 @@ class PTModule:
 
     localVersion = ""
     remoteVersion = ""
+
+    isPublishing = False
 
     def isNewer(self):
         newer = False

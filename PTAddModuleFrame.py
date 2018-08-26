@@ -9,7 +9,6 @@ class PTAddModuleFrame (wx.Frame):
     localPathText = None
     localPathBtn = None
 
-    remotePathTip = None
     remotePathTextTip = None
     remotePathText = None
     remotePathUserTip = None
@@ -27,115 +26,78 @@ class PTAddModuleFrame (wx.Frame):
     repoList = None
     selectedRepo = None
 
-    def __init__(self, callback, repoList):
+    def __init__(self, parent, callback, repoList):
         windowSize = wx.DisplaySize()
 
-        size = (600,400)
+        size = (600,290)
         pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
-        wx.Frame.__init__(self, None, wx.ID_ANY, u"Add module", pos=pos, size=size)
+        wx.Frame.__init__(self, parent, wx.ID_ANY, u"Add module", pos=pos, size=size)
+        self.SetMinSize(size)
 
         self.repoList = repoList
+        self.callback = callback
+
+        gridSizer = wx.FlexGridSizer(5, 2, 10, 10)
 
         # Local path
         self.localPathTip = wx.StaticText(self)
-        self.localPathTip.SetLabelText(u"Local module path :")
-        tipBox = wx.BoxSizer(wx.HORIZONTAL)
-        tipBox.Add((10, 0))
-        tipBox.Add(self.localPathTip, flag=wx.ALIGN_LEFT)
+        self.localPathTip.SetLabelText(u"Local path :")
+        gridSizer.Add(self.localPathTip, 0)
 
         self.localPathText = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT | wx.TE_READONLY,size=(400, 22))
         self.localPathBtn = wx.Button(self, wx.ID_ANY, u"Choose")
         self.localPathBtn.Bind(wx.EVT_BUTTON, self.OnChooseDirectory)
-        inputBox = wx.BoxSizer(wx.HORIZONTAL)
-        inputBox.Add((10, 0))
-        inputBox.Add(self.localPathText, 0, wx.TE_LEFT)
-        inputBox.Add((10, 0))
-        inputBox.Add(self.localPathBtn, flag=wx.ALIGN_RIGHT)
-        inputBox.Add((10, 0))
 
-        # Remote path
-        self.remotePathTip = wx.StaticText(self)
-        self.remotePathTip.SetLabelText(u"Remote module path :")
-        tipBox2 = wx.BoxSizer(wx.HORIZONTAL)
-        tipBox2.Add((10, 0))
-        tipBox2.Add(self.remotePathTip, flag=wx.ALIGN_LEFT)
+        hBox = wx.BoxSizer(wx.HORIZONTAL)
+        hBox.Add(self.localPathText, 1, wx.EXPAND|wx.RIGHT, 10)
+        hBox.Add(self.localPathBtn, 0)
+        gridSizer.Add(hBox, 1, wx.EXPAND)
 
         self.remotePathTextTip = wx.StaticText(self)
         self.remotePathTextTip.SetLabelText(u"SVN URL :")
+        gridSizer.Add(self.remotePathTextTip, 0)
+
         self.remotePathText = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT, size=(400, 22))
-        textBox = wx.BoxSizer(wx.HORIZONTAL)
-        textBox.Add((10, 0))
-        textBox.Add(self.remotePathTextTip, 0, wx.TE_LEFT)
-        textBox.Add((10, 0))
-        textBox.Add(self.remotePathText, flag=wx.ALIGN_RIGHT)
-        textBox.Add((10, 0))
+        gridSizer.Add(self.remotePathText, 1, wx.EXPAND)
 
         self.remotePathUserTip = wx.StaticText(self)
         self.remotePathUserTip.SetLabelText(u"Account :")
+        gridSizer.Add(self.remotePathUserTip, 0)
+
         self.remotePathUser = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT, size=(200, 22))
-        userBox = wx.BoxSizer(wx.HORIZONTAL)
-        userBox.Add((10, 0))
-        userBox.Add(self.remotePathUserTip, 0, wx.TE_LEFT)
-        userBox.Add((10, 0))
-        userBox.Add(self.remotePathUser, flag=wx.ALIGN_RIGHT)
-        userBox.Add((10, 0))
+        gridSizer.Add(self.remotePathUser, 1, wx.EXPAND)
 
         self.remotePathPwdTip = wx.StaticText(self)
         self.remotePathPwdTip.SetLabelText(u"Password :")
+        gridSizer.Add(self.remotePathPwdTip, 0)
+
         self.remotePathPwd = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT | wx.TE_PASSWORD,size=(200, 22))
-        pwdBox = wx.BoxSizer(wx.HORIZONTAL)
-        pwdBox.Add((10, 0))
-        pwdBox.Add(self.remotePathPwdTip, 0, wx.TE_LEFT)
-        pwdBox.Add((10, 0))
-        pwdBox.Add(self.remotePathPwd, flag=wx.ALIGN_RIGHT)
-        pwdBox.Add((10, 0))
+        gridSizer.Add(self.remotePathPwd, 1, wx.EXPAND)
 
         # Repo
         self.repoTip = wx.StaticText(self)
         self.repoTip.SetLabelText(u"Repo :")
-        tipBox3 = wx.BoxSizer(wx.HORIZONTAL)
-        tipBox3.Add((10, 0))
-        tipBox3.Add(self.repoTip, flag=wx.ALIGN_LEFT)
+        gridSizer.Add(self.repoTip, 0)
 
         repoChoiceList = ['None']
         for repo in repoList:
             repoChoiceList.append(repo.repoName)
         self.repoChoice = wx.Choice(self, wx.ID_ANY, choices=repoChoiceList, name=u"Repo list")
         self.repoChoice.Bind(wx.EVT_CHOICE, self.OnChoiceRepo)
-        choiceBox = wx.BoxSizer(wx.HORIZONTAL)
-        choiceBox.Add((10, 0))
-        choiceBox.Add(self.repoChoice, flag=wx.ALIGN_LEFT)
+        gridSizer.Add(self.repoChoice, 1, wx.EXPAND)
+
+        gridSizer.AddGrowableCol(1)
 
         # Add btn
         self.addBtn = wx.Button(self, wx.ID_ANY, u"Add")
         self.addBtn.Bind(wx.EVT_BUTTON, self.OnAddModule)
-        addBtnBox = wx.BoxSizer(wx.HORIZONTAL)
-        addBtnBox.Add(self.addBtn, 0, wx.TE_CENTER)
 
-        vboxer = wx.BoxSizer(wx.VERTICAL)
-        vboxer.Add((0, 20))
-        vboxer.Add(tipBox, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 10))
-        vboxer.Add(inputBox, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 20))
-        vboxer.Add(tipBox2, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 10))
-        vboxer.Add(textBox, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 10))
-        vboxer.Add(userBox, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 10))
-        vboxer.Add(pwdBox, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 20))
-        vboxer.Add(tipBox3, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 10))
-        vboxer.Add(choiceBox, flag=wx.ALIGN_LEFT)
-        vboxer.Add((0, 30))
-        vboxer.Add(addBtnBox, flag=wx.ALIGN_CENTER)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(gridSizer, 1, wx.EXPAND|wx.ALL, 30)
+        sizer.Add(self.addBtn, 0, wx.CENTER|wx.BOTTOM, 30)
 
-        self.SetSizer(vboxer)
+        self.SetSizer(sizer)
         self.Show(True)
-
-        self.callback = callback
 
     def OnChoiceRepo(self, event):
         findRepo = None
