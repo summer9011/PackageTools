@@ -10,12 +10,12 @@ asyncList = None
 
 class PTModule:
     id = None
-    moduleName = None
+    name = None
     localPath = None
     remotePath = None
     username = None
     password = None
-    repoId = 0
+    specRepoId = 0
 
     localVersion = ""
     remoteVersion = ""
@@ -142,7 +142,7 @@ class PTModule:
         try:
             remoteTrunkVersion = ""
 
-            trunkSpecPath = "%s/trunk/%s.podspec" % (module.remotePath, module.moduleName)
+            trunkSpecPath = "%s/trunk/%s.podspec" % (module.remotePath, module.name)
             wx.CallAfter(logCallback, "\nGet remote trunk version -- url: %s\n" % trunkSpecPath)
 
             password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()

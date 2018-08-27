@@ -39,7 +39,7 @@ class PTModuleWindow (wx.Window):
         self.moduleTable.SetColLabelValue(1, u"Module name")
         self.moduleTable.SetColSize(1, 160)
 
-        self.moduleTable.SetColLabelValue(2, u"Repo name")
+        self.moduleTable.SetColLabelValue(2, u"Spec repo name")
         self.moduleTable.SetColSize(2, 160)
 
         self.moduleTable.SetColLabelValue(3, u"Local version")
@@ -86,7 +86,7 @@ class PTModuleWindow (wx.Window):
         self.Fit()
 
     def AppendModule(self, row, module):
-        moduleRepo = PTDBManager().getSpecRepo(module.repoId)
+        moduleSpecRepo = PTDBManager().getSpecRepo(module.specRepoId)
 
         self.moduleTable.AppendRows(1)
 
@@ -97,11 +97,11 @@ class PTModuleWindow (wx.Window):
         self.moduleTable.SetReadOnly(row, 0)
         self.moduleTable.SetCellAlignment(row, 0, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
-        self.moduleTable.SetCellValue(row, 1, module.moduleName)
+        self.moduleTable.SetCellValue(row, 1, module.name)
         self.moduleTable.SetReadOnly(row, 1)
         self.moduleTable.SetCellAlignment(row, 1, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
-        self.moduleTable.SetCellValue(row, 2, moduleRepo.repoName)
+        self.moduleTable.SetCellValue(row, 2, moduleSpecRepo.name)
         self.moduleTable.SetReadOnly(row, 2)
         self.moduleTable.SetCellAlignment(row, 2, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
@@ -163,7 +163,7 @@ class PTModuleWindow (wx.Window):
             PTCommand().publishModule(module, self.logCallback, self.OnPublishModuleCompleteCallback)
         else:
             wx.MessageBox(u"Module (%s) local version is %s, remote trunk version is %s" % (
-                module.moduleName, module.localVersion, remoteTrunkVersion),
+                module.name, module.localVersion, remoteTrunkVersion),
                           u"You should commit all changes using SVN Tools.", wx.OK)
 
     def OnPublishModuleCompleteCallback(self, result, module):

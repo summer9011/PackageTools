@@ -16,17 +16,17 @@ class PTAddModuleFrame (wx.Frame):
     remotePathPwdTip = None
     remotePathPwd = None
 
-    repoTip = None
-    repoChoice = None
+    specRepoTip = None
+    specRepoChoice = None
 
     addBtn = None
 
     callback = None
 
-    repoList = None
-    selectedRepo = None
+    specRepoList = None
+    selectedSpecRepo = None
 
-    def __init__(self, parent, callback, repoList):
+    def __init__(self, parent, callback, specRepoList):
         windowSize = wx.DisplaySize()
 
         size = (600,290)
@@ -34,7 +34,7 @@ class PTAddModuleFrame (wx.Frame):
         wx.Frame.__init__(self, parent, wx.ID_ANY, u"Add module", pos=pos, size=size)
         self.SetMinSize(size)
 
-        self.repoList = repoList
+        self.specRepoList = specRepoList
         self.callback = callback
 
         gridSizer = wx.FlexGridSizer(5, 2, 10, 10)
@@ -74,17 +74,17 @@ class PTAddModuleFrame (wx.Frame):
         self.remotePathPwd = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT | wx.TE_PASSWORD,size=(200, 22))
         gridSizer.Add(self.remotePathPwd, 1, wx.EXPAND)
 
-        # Repo
-        self.repoTip = wx.StaticText(self)
-        self.repoTip.SetLabelText(u"Repo :")
-        gridSizer.Add(self.repoTip, 0)
+        # Spec repo
+        self.specRepoTip = wx.StaticText(self)
+        self.specRepoTip.SetLabelText(u"Spec repo :")
+        gridSizer.Add(self.specRepoTip, 0)
 
-        repoChoiceList = ['None']
-        for repo in repoList:
-            repoChoiceList.append(repo.repoName)
-        self.repoChoice = wx.Choice(self, wx.ID_ANY, choices=repoChoiceList, name=u"Repo list")
-        self.repoChoice.Bind(wx.EVT_CHOICE, self.OnChoiceRepo)
-        gridSizer.Add(self.repoChoice, 1, wx.EXPAND)
+        specRepoChoiceList = ['None']
+        for specRepo in specRepoList:
+            specRepoChoiceList.append(specRepo.name)
+        self.specRepoChoice = wx.Choice(self, wx.ID_ANY, choices=specRepoChoiceList, name=u"Spec repo list")
+        self.specRepoChoice.Bind(wx.EVT_CHOICE, self.OnChoiceSpecRepo)
+        gridSizer.Add(self.specRepoChoice, 1, wx.EXPAND)
 
         gridSizer.AddGrowableCol(1)
 
@@ -99,13 +99,13 @@ class PTAddModuleFrame (wx.Frame):
         self.SetSizer(sizer)
         self.Show(True)
 
-    def OnChoiceRepo(self, event):
-        findRepo = None
-        for repo in self.repoList:
-            if repo.repoName == event.String:
-                findRepo = repo
+    def OnChoiceSpecRepo(self, event):
+        findSpecRepo = None
+        for specRepo in self.specRepoList:
+            if specRepo.name == event.String:
+                findSpecRepo = specRepo
                 break
-        self.selectedRepo = findRepo
+        self.selectedSpecRepo = findSpecRepo
 
     def OnChooseDirectory(self, event):
         dirDlg = wx.DirDialog(self, u"Choose directory", os.path.expanduser('~'), wx.DD_DEFAULT_STYLE)
@@ -118,13 +118,13 @@ class PTAddModuleFrame (wx.Frame):
         module.remotePath = self.remotePathText.GetValue()
         module.username = self.remotePathUser.GetValue()
         module.password = self.remotePathPwd.GetValue()
-        module.moduleName = os.path.basename(module.localPath)
-        if self.selectedRepo != None:
-            module.repoId = self.selectedRepo.id
+        module.name = os.path.basename(module.localPath)
+        if self.selectedSpecRepo != None:
+            module.specRepoId = self.selectedSpecRepo.id
         else:
-            module.repoId = 0
+            module.specRepoId = 0
 
-        if len(module.localPath) > 0 and len(module.remotePath) > 0 and len(module.username) > 0 and len(module.password) > 0 and module.repoId > 0:
+        if len(module.localPath) > 0 and len(module.remotePath) > 0 and len(module.username) > 0 and len(module.password) > 0 and module.specRepoId > 0:
             PTDBManager().addNewModule([module], self.AddModuleCallback)
         else:
             wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)

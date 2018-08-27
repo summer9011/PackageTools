@@ -33,18 +33,18 @@ class PTDBManager:
     def createModuleTable(self):
         self.dbCursor.execute("""CREATE TABLE IF NOT EXISTS "pt_module" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "module_name" TEXT NOT NULL DEFAULT '',
+        "name" TEXT NOT NULL DEFAULT '',
         "local_path" TEXT NOT NULL DEFAULT '',
         "remote_path" TEXT NOT NULL DEFAULT '',
         "username" TEXT NOT NULL DEFAULT '',
         "password" TEXT NOT NULL DEFAULT '',
-        "spec_id" INTEGER NOT NULL DEFAULT 0
+        "spec_repo_id" INTEGER NOT NULL DEFAULT 0
         );""")
 
     def createSpecTable(self):
         self.dbCursor.execute("""CREATE TABLE IF NOT EXISTS "pt_spec_repo" (
         "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        "repo_name" TEXT NOT NULL DEFAULT '',
+        "name" TEXT NOT NULL DEFAULT '',
         "remote_path" TEXT NOT NULL DEFAULT ''
         );""")
 
@@ -57,12 +57,12 @@ class PTDBManager:
         for row in results:
             module = PTModule()
             module.id = row[0]
-            module.moduleName = row[1]
+            module.name = row[1]
             module.localPath = row[2]
             module.remotePath = row[3]
             module.username = row[4]
             module.password = row[5]
-            module.repoId = row[6]
+            module.specRepoId = row[6]
             moduleList.append(module)
         return moduleList
 
@@ -70,18 +70,18 @@ class PTDBManager:
         self.openDB()
         for module in moduleList:
             self.dbCursor.execute("""insert into "pt_module"(
-            "module_name",
+            "name",
             "local_path",
             "remote_path",
             "username",
             "password",
-            "spec_id"
-            ) values ("%s","%s","%s","%s","%s","%s");""" % (module.moduleName,
+            "spec_repo_id"
+            ) values ("%s","%s","%s","%s","%s","%s");""" % (module.name,
                                                             module.localPath,
                                                             module.remotePath,
                                                             module.username,
                                                             module.password,
-                                                            module.repoId))
+                                                            module.specRepoId))
             module.id = self.dbCursor.lastrowid
         self.dbConnect.commit()
         callback(moduleList)
@@ -92,44 +92,44 @@ class PTDBManager:
         self.dbConnect.commit()
         return True
 
-    def getSpecRepo(self, repoId):
+    def getSpecRepo(self, specRepoId):
         self.openDB()
-        self.dbCursor.execute("select * from pt_spec_repo where id = %d;" % repoId)
+        self.dbCursor.execute("select * from pt_spec_repo where id = %d;" % specRepoId)
         result = self.dbCursor.fetchone()
         if result != None:
-            repo = PTSpecRepo()
-            repo.id = repoId
-            repo.repoName = result[1]
-            repo.remotePath = result[2]
-            return repo
+            specRepo = PTSpecRepo()
+            specRepo.id = specRepoId
+            specRepo.name = result[1]
+            specRepo.remotePath = result[2]
+            return specRepo
         return None
 
-    def getRepoList(self):
+    def getSpecRepoList(self):
         self.openDB()
         self.dbCursor.execute("select * from pt_spec_repo;")
         results = self.dbCursor.fetchall()
 
-        repoList = []
+        specRepoList = []
         for row in results:
-            repo = PTSpecRepo()
-            repo.id = row[0]
-            repo.repoName = row[1]
-            repo.remotePath = row[2]
-            repoList.append(repo)
-        return repoList
+            specRepo = PTSpecRepo()
+            specRepo.id = row[0]
+            specRepo.name = row[1]
+            specRepo.remotePath = row[2]
+            specRepoList.append(specRepo)
+        return specRepoList
 
     def addNewSpecRepo(self, specRepo, callback):
         self.openDB()
         self.dbCursor.execute("""insert into "pt_spec_repo"(
-        "repo_name",
+        "name",
         "remote_path"
-        ) values ("%s","%s");""" % (specRepo.repoName, specRepo.remotePath))
+        ) values ("%s","%s");""" % (specRepo.name, specRepo.remotePath))
         specRepo.id = self.dbCursor.lastrowid
         self.dbConnect.commit()
         callback(specRepo)
 
-    def deleteSpecRepo(self, repo):
+    def deleteSpecRepo(self, specRepo):
         self.openDB()
-        self.dbCursor.execute("delete from pt_spec_repo where id = %d;" % repo.id)
+        self.dbCursor.execute("delete from pt_spec_repo where id = %d;" % specRepo.id)
         self.dbConnect.commit()
         return True

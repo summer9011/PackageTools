@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS "pt_spec_repo" (
   "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  "repo_name" TEXT NOT NULL DEFAULT '',
+  "name" TEXT NOT NULL DEFAULT '',
   "remote_path" TEXT NOT NULL DEFAULT ''
 );

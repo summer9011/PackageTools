@@ -2,21 +2,21 @@
 import wx
 
 from PTAddModuleFrame import PTAddModuleFrame
-from PTAddRepoFrame import PTAddRepoFrame
+from PTAddSpecRepoFrame import PTAddSpecRepoFrame
 from PTCommand import PTCommand
 
 from PTEnvironmentWindow import PTEnvironmentWindow
-from PTRepoWindow import PTRepoWindow
+from PTSpecRepoWindow import PTSpecRepoWindow
 from PTModuleWindow import PTModuleWindow
 from PTLoggerWindow import PTLoggerWindow
 
 class PTFrame (wx.Frame):
     environmentWindow = None
-    repoWindow = None
+    specRepoWindow = None
     moduleWindow = None
     loggerWindow = None
 
-    addRepoFrame = None
+    addSpecRepoFrame = None
     addModuleFrame = None
 
     def __init__(self):
@@ -37,8 +37,8 @@ class PTFrame (wx.Frame):
         topNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
         self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback)
         topNotebook.AddPage(self.environmentWindow, u"Environment")
-        self.repoWindow = PTRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
-        topNotebook.AddPage(self.repoWindow, u"Spec Repo List")
+        self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
+        topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
         self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback, self.OnAddModuleCallback)
         topNotebook.AddPage(self.moduleWindow, u"Module List")
 
@@ -61,20 +61,20 @@ class PTFrame (wx.Frame):
     def OnLogCallback(self, message):
         self.loggerWindow.AppendText(message)
 
-    # Add repo callback
+    # Add spec repo callback
     def OnAddSpecRepoCallback(self):
-        self.addRepoFrame = PTAddRepoFrame(self, self.OnAddSpecRepoCompleteCallback)
+        self.addSpecRepoFrame = PTAddSpecRepoFrame(self, self.OnAddSpecRepoCompleteCallback)
 
-    def OnAddSpecRepoCompleteCallback(self, repo):
-        PTCommand().addSpecRepo(repo, self.OnLogCallback, self.OnAddSpecRepoToPodCallback)
+    def OnAddSpecRepoCompleteCallback(self, specRepo):
+        PTCommand().addSpecRepo(specRepo, self.OnLogCallback, self.OnAddSpecRepoToPodCallback)
 
-    def OnAddSpecRepoToPodCallback(self, repo):
-        self.addRepoFrame.Destroy()
-        self.repoWindow.addRepo(repo)
+    def OnAddSpecRepoToPodCallback(self, specRepo):
+        self.addSpecRepoFrame.Destroy()
+        self.specRepoWindow.addSpecRepo(specRepo)
 
     # Add module callback
     def OnAddModuleCallback(self):
-        self.addModuleFrame = PTAddModuleFrame(self, self.OnAddModuleCompleteCallback, self.repoWindow.repoData)
+        self.addModuleFrame = PTAddModuleFrame(self, self.OnAddModuleCompleteCallback, self.specRepoWindow.specRepoData)
 
     def OnAddModuleCompleteCallback(self, moduleList):
         self.addModuleFrame.Destroy()

@@ -2,5 +2,5 @@
 
 class PTSpecRepo:
     id = None
-    repoName = None
+    name = None
     remotePath = None
