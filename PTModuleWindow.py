@@ -210,3 +210,6 @@ class PTModuleWindow (wx.Window):
         self.moduleData.append(module)
         self.AppendModule(len(self.moduleData)-1, module)
         self.refreshVersionsUsingThread()
+
+    def reCreateData(self):
+        print

@@ -10,10 +10,12 @@ class PTEnvironmentWindow (wx.Window):
     exportDataBtn = None
 
     logCallback = None
+    importCallback = None
 
-    def __init__(self, parent, logCallback):
+    def __init__(self, parent, logCallback, importCallback):
         wx.Window.__init__(self, parent)
         self.logCallback = logCallback
+        self.importCallback = importCallback
         self.SetupUI()
 
     def SetupUI(self):
@@ -49,7 +51,7 @@ class PTEnvironmentWindow (wx.Window):
 
     # Import data
     def OnImportData(self, event):
-        filesFilter = "Dicom (*.json)|*.json|" "All files (*.*)|*.*"
+        filesFilter = "Dicom (*.json)|*.json|"
         fileDlg = wx.FileDialog(self, u"Choose Json File", os.path.expanduser('~'), wildcard=filesFilter, style=wx.FD_OPEN)
         if fileDlg.ShowModal() == wx.ID_OK:
             self.importDataBtn.Enable(False)
@@ -59,10 +61,11 @@ class PTEnvironmentWindow (wx.Window):
     def OnImportDataCallback(self, result):
         self.importDataBtn.Enable(True)
         self.importDataBtn.SetLabelText(u"Import Data")
+        self.importCallback()
 
     # Export data
     def OnExportData(self, event):
-        filesFilter = "Dicom (*.json)|*.json|" "All files (*.*)|*.*"
+        filesFilter = "Dicom (*.json)|*.json|"
         fileDlg = wx.FileDialog(self, u"Save Json File", os.path.expanduser('~'), wildcard=filesFilter, style=wx.FD_SAVE)
         if fileDlg.ShowModal() == wx.ID_OK:
             self.exportDataBtn.Enable(False)
@@ -70,5 +73,5 @@ class PTEnvironmentWindow (wx.Window):
             PTDBManager().exportData(fileDlg.GetPath(), self.OnExportDataCallback)
 
     def OnExportDataCallback(self, result):
-        self.importDataBtn.Enable(True)
-        self.importDataBtn.SetLabelText(u"Export Data")
+        self.exportDataBtn.Enable(True)
+        self.exportDataBtn.SetLabelText(u"Export Data")

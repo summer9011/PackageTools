@@ -46,9 +46,9 @@ class PTFrame (wx.Frame):
         topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
         self.codeRepoWindow = PTCodeRepoWindow(topNotebook, self.OnLogCallback, self.OnAddCodeRepoCallback)
         topNotebook.AddPage(self.codeRepoWindow, u"Code Repo List")
-        self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback)
+        self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback, self.OnEnvironmentImportCallback)
         topNotebook.AddPage(self.environmentWindow, u"Environment")
-        topNotebook.SetSelection(0)
+        topNotebook.SetSelection(3)
 
         # Bottom window
         bottomNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
@@ -89,6 +89,12 @@ class PTFrame (wx.Frame):
     def OnAddModuleCompleteCallback(self, moduleList):
         self.addModuleFrame.Destroy()
         self.moduleWindow.addModule(moduleList[0])
+
+    # Environment callback
+    def OnEnvironmentImportCallback(self):
+        self.moduleWindow.reCreateData()
+        self.specRepoWindow.reCreateData()
+        self.codeRepoWindow.reCreateData()
 
     # Log callback
     def OnLogCallback(self, message):

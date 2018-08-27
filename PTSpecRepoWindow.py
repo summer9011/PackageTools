@@ -114,3 +114,6 @@ class PTSpecRepoWindow (wx.Window):
         self.ClearSelection()
         self.specRepoData.append(specRepo)
         self.AppendSpecRepo(len(self.specRepoData)-1, specRepo)
+
+    def reCreateData(self):
+        print

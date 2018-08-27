@@ -121,3 +121,6 @@ class PTCodeRepoWindow (wx.Window):
         self.ClearSelection()
         self.codeRepoData.append(codeRepo)
         self.AppendCodeRepo(len(self.codeRepoData)-1, codeRepo)
+
+    def reCreateData(self):
+        print

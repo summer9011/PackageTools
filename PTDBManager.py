@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sqlite3
+import json
 from PTModule import PTModule
 from PTSpecRepo import PTSpecRepo
 from PTCodeRepo import PTCodeRepo
@@ -63,11 +64,103 @@ class PTDBManager:
 
     # Import & export
     def importData(self, filePath, callback):
-        print filePath
+        self.openDB()
+
+        f = open(filePath, 'r')
+        jsonStr = f.read()
+        jsonObj = json.loads(jsonStr)
+
+        moduleData = jsonObj["pt_module"]
+        specRepoData = jsonObj["pt_spec_repo"]
+        codeRepoData = jsonObj["pt_code_repo"]
+
+        self.dbCursor.execute("delete from pt_module;")
+        self.dbCursor.execute("delete from pt_spec_repo;")
+        self.dbCursor.execute("delete from pt_code_repo;")
+        self.dbCursor.execute("update sqlite_sequence set seq = 0 where name = \"pt_module\";")
+        self.dbCursor.execute("update sqlite_sequence set seq = 0 where name = \"pt_spec_repo\";")
+        self.dbCursor.execute("update sqlite_sequence set seq = 0 where name = \"pt_code_repo\";")
+
+        for dict in moduleData:
+            names = []
+            vals = []
+            for key in dict:
+                names.append(key)
+                vals.append(dict[key])
+
+            nameStr = ",".join(str(name) for name in names)
+            valStr = ",".join(str(val) for val in vals)
+            self.dbCursor.execute("""insert into "pt_module"(%s) values (%s);""" % (nameStr, valStr))
+
+        for dict in specRepoData:
+            names = []
+            vals = []
+            for key in dict:
+                names.append(key)
+                vals.append(dict[key])
+
+            nameStr = ",".join(str(name) for name in names)
+            valStr = ",".join(str(val) for val in vals)
+            self.dbCursor.execute("""insert into "pt_spec_repo"(%s) values (%s);""" % (nameStr, valStr))
+
+        for dict in codeRepoData:
+            names = []
+            vals = []
+            for key in dict:
+                names.append(key)
+                vals.append(dict[key])
+
+            nameStr = ",".join(str(name) for name in names)
+            valStr = ",".join(str(val) for val in vals)
+            self.dbCursor.execute("""insert into "pt_code_repo"(%s) values (%s);""" % (nameStr, valStr))
         callback(True)
 
     def exportData(self, filePath, callback):
-        print filePath
+        self.openDB()
+
+        moduleData = []
+        self.dbCursor.execute("select * from {}".format("pt_module"))
+        moduleDesc = self.dbCursor.description
+        self.dbCursor.execute("select * from pt_module;")
+        moduleResult = self.dbCursor.fetchall()
+
+        specRepoData = []
+        self.dbCursor.execute("select * from {}".format("pt_spec_repo"))
+        specRepoDesc = self.dbCursor.description
+        self.dbCursor.execute("select * from pt_spec_repo;")
+        specRepoResult = self.dbCursor.fetchall()
+
+        codeRepoData = []
+        self.dbCursor.execute("select * from {}".format("pt_code_repo"))
+        codeRepoDesc = self.dbCursor.description
+        self.dbCursor.execute("select * from pt_code_repo;")
+        codeRepoResult = self.dbCursor.fetchall()
+
+        for row in moduleResult:
+            dict = {}
+            for i in range(0, 5):
+                dict[moduleDesc[i][0]] = row[i]
+            moduleData.append(dict)
+
+        for row in specRepoResult:
+            dict = {}
+            for i in range(0, 3):
+                dict[specRepoDesc[i][0]] = row[i]
+            specRepoData.append(dict)
+
+        for row in codeRepoResult:
+            dict = {}
+            for i in range(0, 6):
+                dict[codeRepoDesc[i][0]] = row[i]
+            codeRepoData.append(dict)
+
+        jsonObj = {"pt_module":moduleData, "pt_spec_repo":specRepoData, "pt_code_repo":codeRepoData}
+        jsonStr = json.dumps(jsonObj)
+
+        f = open(filePath, 'w')
+        f.write(jsonStr)
+        f.close()
+
         callback(True)
 
     # Module methods
