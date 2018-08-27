@@ -1,27 +1,32 @@
 #!/usr/bin/env python
 import wx
 
-from PTAddModuleFrame import PTAddModuleFrame
-from PTAddSpecRepoFrame import PTAddSpecRepoFrame
 from PTCommand import PTCommand
 
 from PTEnvironmentWindow import PTEnvironmentWindow
+from PTCodeRepoWindow import PTCodeRepoWindow
 from PTSpecRepoWindow import PTSpecRepoWindow
 from PTModuleWindow import PTModuleWindow
 from PTLoggerWindow import PTLoggerWindow
 
+from PTAddModuleFrame import PTAddModuleFrame
+from PTAddCodeRepoFrame import PTAddCodeRepoFrame
+from PTAddSpecRepoFrame import PTAddSpecRepoFrame
+
 class PTFrame (wx.Frame):
     environmentWindow = None
+    codeRepoWindow = None
     specRepoWindow = None
     moduleWindow = None
     loggerWindow = None
 
+    addCodeRepoFrame = None
     addSpecRepoFrame = None
     addModuleFrame = None
 
     def __init__(self):
         displaySize = wx.GetDisplaySize()
-        size = (800, 800)
+        size = (960, 800)
         wx.Frame.__init__(self, None, wx.ID_ANY, u"iOS Develop Tools", pos=((displaySize[0]-size[0])/2, (displaySize[1]-size[1])/2), size=size)
         self.SetMinSize(size)
         self.SetupUI()
@@ -35,14 +40,15 @@ class PTFrame (wx.Frame):
 
         # Top window
         topNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
-        self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback)
-        topNotebook.AddPage(self.environmentWindow, u"Environment")
-        self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
-        topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
         self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback, self.OnAddModuleCallback)
         topNotebook.AddPage(self.moduleWindow, u"Module List")
-
-        topNotebook.SetSelection(2)
+        self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
+        topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
+        self.codeRepoWindow = PTCodeRepoWindow(topNotebook, self.OnLogCallback, self.OnAddCodeRepoCallback)
+        topNotebook.AddPage(self.codeRepoWindow, u"Code Repo List")
+        self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback)
+        topNotebook.AddPage(self.environmentWindow, u"Environment")
+        topNotebook.SetSelection(0)
 
         # Bottom window
         bottomNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
@@ -57,9 +63,13 @@ class PTFrame (wx.Frame):
         panel.SetSizer(sizer)
         panel.Fit()
 
-    # Log callback
-    def OnLogCallback(self, message):
-        self.loggerWindow.AppendText(message)
+    # Add code repo callback
+    def OnAddCodeRepoCallback(self):
+        self.addCodeRepoFrame = PTAddCodeRepoFrame(self, self.OnAddCodeRepoCompleteCallback)
+
+    def OnAddCodeRepoCompleteCallback(self, codeRepo):
+        self.addCodeRepoFrame.Destroy()
+        self.codeRepoWindow.addCodeRepo(codeRepo)
 
     # Add spec repo callback
     def OnAddSpecRepoCallback(self):
@@ -74,8 +84,12 @@ class PTFrame (wx.Frame):
 
     # Add module callback
     def OnAddModuleCallback(self):
-        self.addModuleFrame = PTAddModuleFrame(self, self.OnAddModuleCompleteCallback, self.specRepoWindow.specRepoData)
+        self.addModuleFrame = PTAddModuleFrame(self, self.OnAddModuleCompleteCallback, self.codeRepoWindow.codeRepoData, self.specRepoWindow.specRepoData)
 
     def OnAddModuleCompleteCallback(self, moduleList):
         self.addModuleFrame.Destroy()
         self.moduleWindow.addModule(moduleList[0])
+
+    # Log callback
+    def OnLogCallback(self, message):
+        self.loggerWindow.AppendText(message)

@@ -4,7 +4,6 @@ from PTDBManager import PTDBManager
 from PTSpecRepo import PTSpecRepo
 
 class PTAddSpecRepoFrame (wx.Frame):
-    specRepoTip = None
     specRepoNameTextTip = None
     specRepoNameText = None
     specRepoPathTextTip = None

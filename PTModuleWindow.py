@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import wx
 import wx.grid
+import PTModuleHelper
 from PTDBManager import PTDBManager
-from PTModule import PTModule
 from PTCommand import PTCommand
 
 class PTModuleWindow (wx.Window):
@@ -30,7 +30,7 @@ class PTModuleWindow (wx.Window):
     def SetupUI(self):
         # Table
         self.moduleTable = wx.grid.Grid(self, wx.ID_ANY)
-        self.moduleTable.CreateGrid(0, 5, 1)
+        self.moduleTable.CreateGrid(0, 6, 1)
         self.moduleTable.SetAutoLayout(1)
 
         self.moduleTable.SetColLabelValue(0, u"ID")
@@ -39,14 +39,17 @@ class PTModuleWindow (wx.Window):
         self.moduleTable.SetColLabelValue(1, u"Module name")
         self.moduleTable.SetColSize(1, 160)
 
-        self.moduleTable.SetColLabelValue(2, u"Spec repo name")
+        self.moduleTable.SetColLabelValue(2, u"Code repo name")
         self.moduleTable.SetColSize(2, 160)
 
-        self.moduleTable.SetColLabelValue(3, u"Local version")
-        self.moduleTable.SetColSize(3, 120)
+        self.moduleTable.SetColLabelValue(3, u"Spec repo name")
+        self.moduleTable.SetColSize(3, 160)
 
-        self.moduleTable.SetColLabelValue(4, u"Remote version")
+        self.moduleTable.SetColLabelValue(4, u"Local version")
         self.moduleTable.SetColSize(4, 120)
+
+        self.moduleTable.SetColLabelValue(5, u"Remote version")
+        self.moduleTable.SetColSize(5, 120)
 
         row = 0
         for module in self.moduleData:
@@ -86,7 +89,8 @@ class PTModuleWindow (wx.Window):
         self.Fit()
 
     def AppendModule(self, row, module):
-        moduleSpecRepo = PTDBManager().getSpecRepo(module.specRepoId)
+        codeRepo = PTDBManager().getCodeRepo(module.codeRepoId)
+        specRepo = PTDBManager().getSpecRepo(module.specRepoId)
 
         self.moduleTable.AppendRows(1)
 
@@ -101,17 +105,31 @@ class PTModuleWindow (wx.Window):
         self.moduleTable.SetReadOnly(row, 1)
         self.moduleTable.SetCellAlignment(row, 1, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
-        self.moduleTable.SetCellValue(row, 2, moduleSpecRepo.name)
+        self.moduleTable.SetCellValue(row, 2, codeRepo.name)
         self.moduleTable.SetReadOnly(row, 2)
         self.moduleTable.SetCellAlignment(row, 2, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
-        self.moduleTable.SetCellValue(row, 3, module.localVersion)
+        self.moduleTable.SetCellValue(row, 3, specRepo.name)
         self.moduleTable.SetReadOnly(row, 3)
         self.moduleTable.SetCellAlignment(row, 3, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
-        self.moduleTable.SetCellValue(row, 4, module.remoteVersion)
+        self.moduleTable.SetCellValue(row, 4, module.localVersion)
         self.moduleTable.SetReadOnly(row, 4)
         self.moduleTable.SetCellAlignment(row, 4, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
+
+        self.moduleTable.SetCellValue(row, 5, module.remoteVersion)
+        self.moduleTable.SetReadOnly(row, 5)
+        self.moduleTable.SetCellAlignment(row, 5, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
+
+        self.UpdateCellTextColor(row, module)
+
+    def UpdateCellTextColor(self, row, module):
+        if module.isNewer():
+            self.moduleTable.SetCellTextColour(row, 4, wx.BLUE)
+        elif module.isOlder():
+            self.moduleTable.SetCellTextColour(row, 4, wx.RED)
+        else:
+            self.moduleTable.SetCellTextColour(row, 4, wx.BLACK)
 
     def ClearSelection(self):
         self.moduleTable.ClearSelection()
@@ -122,12 +140,13 @@ class PTModuleWindow (wx.Window):
         self.refreshVersionsUsingThread()
 
     def refreshVersionsUsingThread(self):
-        PTModule.asyncModuleVersions(self.moduleData, self.logCallback, self.refreshVersionCallback)
+        PTModuleHelper.asyncModuleVersions(self.moduleData, self.logCallback, self.refreshVersionCallback)
 
     def refreshVersionCallback(self, module):
         row = self.moduleData.index(module)
-        self.moduleTable.SetCellValue(row, 3, module.localVersion)
-        self.moduleTable.SetCellValue(row, 4, module.remoteVersion)
+        self.moduleTable.SetCellValue(row, 4, module.localVersion)
+        self.moduleTable.SetCellValue(row, 5, module.remoteVersion)
+        self.UpdateCellTextColor(row, module)
 
         if len(self.moduleTable.SelectedRows) > 0 and self.moduleTable.SelectedRows[0] == row:
             self.publishBtn.Enable(module.isNewer())
@@ -153,7 +172,7 @@ class PTModuleWindow (wx.Window):
     def OnPublishModule(self, event):
         row = self.moduleTable.SelectedRows[0]
         module = self.moduleData[row]
-        remoteTrunkVersion = PTModule.getModuleTrunkRemoteVersion(module, self.logCallback)
+        remoteTrunkVersion = PTModuleHelper.getModuleTrunkRemoteVersion(module, self.logCallback)
         if module.localVersion == remoteTrunkVersion:
             module.isPublishing = True
             self.publishBtn.Enable(False)
@@ -168,7 +187,7 @@ class PTModuleWindow (wx.Window):
 
     def OnPublishModuleCompleteCallback(self, result, module):
         if result == True:
-            PTModule.asyncModuleVersions([module], self.logCallback, self.refreshVersionCallback)
+            PTModuleHelper.asyncModuleVersions([module], self.logCallback, self.refreshVersionCallback)
             self.refreshVersionBtn.Enable(True)
 
     def OnCellLeftClick(self, event):
@@ -181,7 +200,7 @@ class PTModuleWindow (wx.Window):
         module = self.moduleData[row]
         if module.isPublishing == False:
             self.publishBtn.Enable(module.isNewer())
-            self.deleteModuleBtn.Enable(True)
+            self.deleteModuleBtn.Enable(module.isPublishing == False)
 
     def OnLabelLeftClick(self, event):
         pass
@@ -190,3 +209,4 @@ class PTModuleWindow (wx.Window):
         self.ClearSelection()
         self.moduleData.append(module)
         self.AppendModule(len(self.moduleData)-1, module)
+        self.refreshVersionsUsingThread()

@@ -8,14 +8,8 @@ class PTAddModuleFrame (wx.Frame):
     localPathTip = None
     localPathText = None
     localPathBtn = None
-
-    remotePathTextTip = None
-    remotePathText = None
-    remotePathUserTip = None
-    remotePathUser = None
-    remotePathPwdTip = None
-    remotePathPwd = None
-
+    codeRepoTip = None
+    codeRepoChoice = None
     specRepoTip = None
     specRepoChoice = None
 
@@ -23,25 +17,29 @@ class PTAddModuleFrame (wx.Frame):
 
     callback = None
 
+    codeRepoList = None
     specRepoList = None
+
+    selectedCodeRepo = None
     selectedSpecRepo = None
 
-    def __init__(self, parent, callback, specRepoList):
+    def __init__(self, parent, callback, codeRepoList, specRepoList):
         windowSize = wx.DisplaySize()
 
-        size = (600,290)
+        size = (600,220)
         pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
         wx.Frame.__init__(self, parent, wx.ID_ANY, u"Add module", pos=pos, size=size)
         self.SetMinSize(size)
 
+        self.codeRepoList = codeRepoList
         self.specRepoList = specRepoList
         self.callback = callback
 
-        gridSizer = wx.FlexGridSizer(5, 2, 10, 10)
+        gridSizer = wx.FlexGridSizer(3, 2, 10, 10)
 
         # Local path
         self.localPathTip = wx.StaticText(self)
-        self.localPathTip.SetLabelText(u"Local path :")
+        self.localPathTip.SetLabelText(u"Trunk path:")
         gridSizer.Add(self.localPathTip, 0)
 
         self.localPathText = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT | wx.TE_READONLY,size=(400, 22))
@@ -53,26 +51,17 @@ class PTAddModuleFrame (wx.Frame):
         hBox.Add(self.localPathBtn, 0)
         gridSizer.Add(hBox, 1, wx.EXPAND)
 
-        self.remotePathTextTip = wx.StaticText(self)
-        self.remotePathTextTip.SetLabelText(u"SVN URL :")
-        gridSizer.Add(self.remotePathTextTip, 0)
+        # Code repo
+        self.codeRepoTip = wx.StaticText(self)
+        self.codeRepoTip.SetLabelText(u"Code repo :")
+        gridSizer.Add(self.codeRepoTip, 0)
 
-        self.remotePathText = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT, size=(400, 22))
-        gridSizer.Add(self.remotePathText, 1, wx.EXPAND)
-
-        self.remotePathUserTip = wx.StaticText(self)
-        self.remotePathUserTip.SetLabelText(u"Account :")
-        gridSizer.Add(self.remotePathUserTip, 0)
-
-        self.remotePathUser = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT, size=(200, 22))
-        gridSizer.Add(self.remotePathUser, 1, wx.EXPAND)
-
-        self.remotePathPwdTip = wx.StaticText(self)
-        self.remotePathPwdTip.SetLabelText(u"Password :")
-        gridSizer.Add(self.remotePathPwdTip, 0)
-
-        self.remotePathPwd = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT | wx.TE_PASSWORD,size=(200, 22))
-        gridSizer.Add(self.remotePathPwd, 1, wx.EXPAND)
+        codeRepoChoiceList = ['None']
+        for codeRepo in codeRepoList:
+            codeRepoChoiceList.append(codeRepo.name)
+        self.codeRepoChoice = wx.Choice(self, wx.ID_ANY, choices=codeRepoChoiceList, name=u"Code repo list")
+        self.codeRepoChoice.Bind(wx.EVT_CHOICE, self.OnChoiceCodeRepo)
+        gridSizer.Add(self.codeRepoChoice, 1, wx.EXPAND)
 
         # Spec repo
         self.specRepoTip = wx.StaticText(self)
@@ -99,13 +88,17 @@ class PTAddModuleFrame (wx.Frame):
         self.SetSizer(sizer)
         self.Show(True)
 
+    def OnChoiceCodeRepo(self, event):
+        if event.Selection > 0:
+            self.selectedCodeRepo = self.codeRepoList[event.Selection-1]
+        else:
+            self.selectedCodeRepo = None
+
     def OnChoiceSpecRepo(self, event):
-        findSpecRepo = None
-        for specRepo in self.specRepoList:
-            if specRepo.name == event.String:
-                findSpecRepo = specRepo
-                break
-        self.selectedSpecRepo = findSpecRepo
+        if event.Selection > 0:
+            self.selectedSpecRepo = self.specRepoList[event.Selection-1]
+        else:
+            self.selectedSpecRepo = None
 
     def OnChooseDirectory(self, event):
         dirDlg = wx.DirDialog(self, u"Choose directory", os.path.expanduser('~'), wx.DD_DEFAULT_STYLE)
@@ -115,20 +108,21 @@ class PTAddModuleFrame (wx.Frame):
     def OnAddModule(self, event):
         module = PTModule()
         module.localPath = self.localPathText.GetValue()
-        module.remotePath = self.remotePathText.GetValue()
-        module.username = self.remotePathUser.GetValue()
-        module.password = self.remotePathPwd.GetValue()
         module.name = os.path.basename(module.localPath)
+        if self.selectedCodeRepo != None:
+            module.codeRepoId = self.selectedCodeRepo.id
+        else:
+            module.codeRepoId = 0
+
         if self.selectedSpecRepo != None:
             module.specRepoId = self.selectedSpecRepo.id
         else:
             module.specRepoId = 0
 
-        if len(module.localPath) > 0 and len(module.remotePath) > 0 and len(module.username) > 0 and len(module.password) > 0 and module.specRepoId > 0:
+        if len(module.localPath) > 0 and module.codeRepoId > 0 and module.specRepoId > 0:
             PTDBManager().addNewModule([module], self.AddModuleCallback)
         else:
             wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)
 
     def AddModuleCallback(self, moduleList):
-        if self.callback != None:
-            self.callback(moduleList)
+        self.callback(moduleList)

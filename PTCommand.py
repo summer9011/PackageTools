@@ -2,6 +2,7 @@
 import commands
 import thread
 import wx
+import os
 from PTDBManager import PTDBManager
 
 class PTCommand:
@@ -19,9 +20,11 @@ class PTCommand:
         thread.start_new_thread(self.publishModuleWithShell, (module, logCallback, completeCallback))
 
     def publishModuleWithShell(self, module, logCallback, completeCallback):
+        codeRepoInfo = PTDBManager().getCodeRepo(module.codeRepoId)
         specRepoInfo = PTDBManager().getSpecRepo(module.specRepoId)
-        if specRepoInfo != None:
-            svnCopyToTag = "svn copy %s/trunk %s/tags/%s -m \"release to %s\"" % (module.remotePath, module.remotePath, module.localVersion, module.localVersion)
+        if codeRepoInfo != None and specRepoInfo != None:
+            moduelRemotePath = os.path.join(codeRepoInfo.remotePath, module.name)
+            svnCopyToTag = "svn copy %s/trunk %s/tags/%s -m \"release to %s\"" % (moduelRemotePath, moduelRemotePath, module.localVersion, module.localVersion)
             self.logCommand(svnCopyToTag, logCallback)
             copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
             self.logOutput(copyRet, copyOutput, logCallback)
@@ -60,7 +63,7 @@ class PTCommand:
         thread.start_new_thread(self.checkPodCommandWithShell, (logCallback, completeCallback))
 
     def checkPodCommandWithShell(self, logCallback, completeCallback):
-        testPod = "echo $HOME; echo `pwd`; cd $HOME; /usr/local/bin/pod --version"
+        testPod = "cd $HOME; /usr/local/bin/pod --version"
         self.logCommand(testPod, logCallback)
         copyRet, copyOutput = commands.getstatusoutput(testPod)
         self.logOutput(copyRet, copyOutput, logCallback)
