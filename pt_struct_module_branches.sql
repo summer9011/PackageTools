@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS "pt_module_branch" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "remote_name" TEXT NOT NULL DEFAULT '',
+  "local_path" TEXT NOT NULL DEFAULT '',
+  "module_id" INTEGER NOT NULL DEFAULT 0
+);

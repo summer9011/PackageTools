@@ -5,6 +5,7 @@ import json
 from PTModule import PTModule
 from PTSpecRepo import PTSpecRepo
 from PTCodeRepo import PTCodeRepo
+from PTModuleBranch import PTModuleBranch
 
 class PTDBManager:
     __instance = None
@@ -31,6 +32,7 @@ class PTDBManager:
                 self.createModuleTable()
                 self.createSpecTable()
                 self.createCodeTable()
+                self.createModuleBranchesTable()
                 self.dbConnect.commit()
 
     # Add module table
@@ -60,6 +62,15 @@ class PTDBManager:
           "username" TEXT NOT NULL DEFAULT '',
           "password" TEXT NOT NULL DEFAULT '',
           "type" INTEGER NOT NULL DEFAULT 0
+        );""")
+
+    # Add module branches table
+    def createModuleBranchesTable(self):
+        self.dbCursor.execute("""CREATE TABLE IF NOT EXISTS "pt_module_branch" (
+          "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          "remote_name" TEXT NOT NULL DEFAULT '',
+          "local_path" TEXT NOT NULL DEFAULT '',
+          "module_id" INTEGER NOT NULL DEFAULT 0
         );""")
 
     # Import & export
@@ -208,6 +219,7 @@ class PTDBManager:
 
     def deleteModule(self, module):
         self.openDB()
+        self.deleteModuleBranches(module.id)
         self.dbCursor.execute("delete from pt_module where id = %d;" % module.id)
         self.dbConnect.commit()
         return True
@@ -309,5 +321,46 @@ class PTDBManager:
     def deleteCodeRepo(self, codeRepo):
         self.openDB()
         self.dbCursor.execute("delete from pt_code_repo where id = %d;" % codeRepo.id)
+        self.dbConnect.commit()
+        return True
+
+    # Module branches methods
+    def getModuleBranches(self, moduleId):
+        self.openDB()
+        self.dbCursor.execute("select * from pt_module_branch where module_id = %d;" % moduleId)
+        results = self.dbCursor.fetchall()
+
+        branchList = []
+        for row in results:
+            moduleBranch = PTModuleBranch()
+            moduleBranch.id = row[0]
+            moduleBranch.remoteName = row[1]
+            moduleBranch.localPath = row[2]
+            moduleBranch.moduleId = row[3]
+            branchList.append(moduleBranch)
+        return branchList
+
+    def addNewModuleBranch(self, moduleBranch, callback):
+        self.openDB()
+        self.dbCursor.execute("""insert into "pt_module_branch"(
+        "remote_name",
+        "local_path",
+        "module_id"
+        ) values ("%s","%s","%s");""" % (moduleBranch.remoteName,
+                                         moduleBranch.localPath,
+                                         moduleBranch.moduleId))
+        moduleBranch.id = self.dbCursor.lastrowid
+        self.dbConnect.commit()
+        callback(moduleBranch)
+
+    def deleteModuleBranch(self, moduleBranch):
+        self.openDB()
+        self.dbCursor.execute("delete from pt_module_branch where id = %d;" % moduleBranch.id)
+        self.dbConnect.commit()
+        return True
+
+    def deleteModuleBranches(self, moduleId):
+        self.openDB()
+        self.dbCursor.execute("delete from pt_module_branch where module_id = %d;" % moduleId)
         self.dbConnect.commit()
         return True

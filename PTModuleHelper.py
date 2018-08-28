@@ -6,13 +6,9 @@ import urllib2
 import time
 import wx
 from PTDBManager import PTDBManager
-
-asyncList = None
+from PTModuleBranch import PTRemoteModuleBranch
 
 def asyncModuleVersions(moduleList, logCallback, resultCallback):
-    if asyncList != None:
-        thread.exit()
-
     thread.start_new_thread(getVersion, (moduleList, logCallback, resultCallback))
 
 def getVersion(moduleList, logCallback, resultCallback):
@@ -124,3 +120,31 @@ def getRemoteContent(module, pathPattern):
         return (path, urllib2.urlopen(path))
     else:
         return None
+
+def getModuleRemoteBranches(module, logCallback, resultCallback):
+    thread.start_new_thread(getBranches, (module, logCallback, resultCallback))
+
+def getBranches(module, logCallback, resultCallback):
+    branchList = None
+    try:
+        res = getRemoteContent(module, "%s/branches")
+        if res != None:
+            tagPath = res[0]
+            ret = res[1]
+            wx.CallAfter(logCallback, "\nGet remote tags version -- url: %s\n" % tagPath)
+            line = ret.readline()
+            while line:
+                print line
+                # match = re.match(r'.*<a.*>(.*)/</a>.*', line, re.M | re.I)
+                # if match:
+                #     serverVersion = match.group(1)
+
+                line = ret.readline()
+            wx.CallAfter(logCallback, "\nGet remote branches -- branches %s\n" % branchList)
+            wx.CallAfter(resultCallback, branchList)
+        else:
+            wx.CallAfter(logCallback, "\nGet remote branches -- Can't find module's code repo\n")
+            wx.CallAfter(resultCallback, branchList)
+    except Exception as e:
+        wx.CallAfter(logCallback, "\nGet remote branches -- %s\n" % e)
+        wx.CallAfter(resultCallback, branchList)

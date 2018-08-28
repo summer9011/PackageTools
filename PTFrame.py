@@ -12,6 +12,7 @@ from PTLoggerWindow import PTLoggerWindow
 from PTAddModuleFrame import PTAddModuleFrame
 from PTAddCodeRepoFrame import PTAddCodeRepoFrame
 from PTAddSpecRepoFrame import PTAddSpecRepoFrame
+from PTBranchesFrame import PTBranchesFrame
 
 class PTFrame (wx.Frame):
     environmentWindow = None
@@ -23,6 +24,7 @@ class PTFrame (wx.Frame):
     addCodeRepoFrame = None
     addSpecRepoFrame = None
     addModuleFrame = None
+    branchesFrame = None
 
     def __init__(self):
         displaySize = wx.GetDisplaySize()
@@ -40,7 +42,7 @@ class PTFrame (wx.Frame):
 
         # Top window
         topNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
-        self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback, self.OnAddModuleCallback)
+        self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback, self.OnAddModuleCallback, self.OnBranchesCallback)
         topNotebook.AddPage(self.moduleWindow, u"Module List")
         self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
         topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
@@ -89,6 +91,12 @@ class PTFrame (wx.Frame):
     def OnAddModuleCompleteCallback(self, moduleList):
         self.addModuleFrame.Destroy()
         self.moduleWindow.addModule(moduleList[0])
+
+    def OnBranchesCallback(self, module):
+        self.branchesFrame = PTBranchesFrame(self, self.OnLogCallback, self.OnBranchesCompleteCallback, module)
+
+    def OnBranchesCompleteCallback(self):
+        print
 
     # Environment callback
     def OnEnvironmentImportCallback(self):

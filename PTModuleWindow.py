@@ -12,18 +12,21 @@ class PTModuleWindow (wx.Window):
     addModuleBtn = None
     deleteModuleBtn = None
     publishBtn = None
+    branchesBtn = None
 
     moduleData = None
 
     logCallback = None
     addModuleCallback = None
+    branchesCallback = None
 
-    def __init__(self, parent, logCallback, addModuleCallback):
+    def __init__(self, parent, logCallback, addModuleCallback, branchesCallback):
         wx.Window.__init__(self, parent)
 
         self.moduleData = PTDBManager().getModuleList()
         self.logCallback = logCallback
         self.addModuleCallback = addModuleCallback
+        self.branchesCallback = branchesCallback
         self.SetupUI()
         self.refreshVersionsUsingThread()
 
@@ -66,6 +69,10 @@ class PTModuleWindow (wx.Window):
         self.addModuleBtn = wx.Button(self, wx.ID_ANY, u"Add Module")
         self.addModuleBtn.Bind(wx.EVT_BUTTON, self.OnAddModule)
 
+        self.branchesBtn = wx.Button(self, wx.ID_ANY, u"Branches")
+        self.branchesBtn.Bind(wx.EVT_BUTTON, self.OnShowModuleBranches)
+        self.branchesBtn.Enable(False)
+
         self.publishBtn = wx.Button(self, wx.ID_ANY, u"Publish")
         self.publishBtn.Bind(wx.EVT_BUTTON, self.OnPublishModule)
         self.publishBtn.Enable(False)
@@ -78,6 +85,7 @@ class PTModuleWindow (wx.Window):
         hBox.Add(self.refreshVersionBtn, 0, wx.LEFT, 10)
         hBox.Add(self.addModuleBtn, 0, wx.LEFT, 10)
         hBox.Add(wx.StaticText(self), 1, wx.EXPAND)
+        hBox.Add(self.branchesBtn, 0, wx.RIGHT, 10)
         hBox.Add(self.publishBtn, 0, wx.RIGHT, 10)
         hBox.Add(self.deleteModuleBtn, 0, wx.RIGHT, 10)
 
@@ -151,6 +159,7 @@ class PTModuleWindow (wx.Window):
         if len(self.moduleTable.SelectedRows) > 0 and self.moduleTable.SelectedRows[0] == row:
             self.publishBtn.Enable(module.isNewer())
             self.deleteModuleBtn.Enable(True)
+            self.branchesBtn.Enable(True)
             module.isPublishing = False
 
     def OnAddModule(self, event):
@@ -169,6 +178,12 @@ class PTModuleWindow (wx.Window):
 
         self.refreshVersionBtn.Enable(True)
 
+    def OnShowModuleBranches(self, event):
+        row = self.moduleTable.SelectedRows[0]
+        module = self.moduleData[row]
+
+        self.branchesCallback(module)
+
     def OnPublishModule(self, event):
         row = self.moduleTable.SelectedRows[0]
         module = self.moduleData[row]
@@ -178,6 +193,7 @@ class PTModuleWindow (wx.Window):
             self.publishBtn.Enable(False)
             self.publishBtn.SetLabelText(u"Publishing")
             self.deleteModuleBtn.Enable(False)
+            self.branchesBtn.Enable(False)
             self.refreshVersionBtn.Enable(False)
             PTCommand().publishModule(module, self.logCallback, self.OnPublishModuleCompleteCallback)
         else:
@@ -200,7 +216,9 @@ class PTModuleWindow (wx.Window):
         module = self.moduleData[row]
         if module.isPublishing == False:
             self.publishBtn.Enable(module.isNewer())
-            self.deleteModuleBtn.Enable(module.isPublishing == False)
+            isPublishing = (module.isPublishing == False)
+            self.deleteModuleBtn.Enable(isPublishing)
+            self.branchesBtn.Enable(isPublishing)
 
     def OnLabelLeftClick(self, event):
         pass
