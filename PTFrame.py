@@ -48,7 +48,7 @@ class PTFrame (wx.Frame):
         topNotebook.AddPage(self.codeRepoWindow, u"Code Repo List")
         self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback, self.OnEnvironmentImportCallback)
         topNotebook.AddPage(self.environmentWindow, u"Environment")
-        topNotebook.SetSelection(3)
+        topNotebook.SetSelection(0)
 
         # Bottom window
         bottomNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
