@@ -212,4 +212,13 @@ class PTModuleWindow (wx.Window):
         self.refreshVersionsUsingThread()
 
     def reCreateData(self):
-        print
+        if len(self.moduleData)> 0:
+            self.moduleTable.DeleteRows(0, len(self.moduleData))
+            self.moduleTable.ClearSelection()
+
+        self.moduleData = PTDBManager().getModuleList()
+        row = 0
+        for module in self.moduleData:
+            self.AppendModule(row, module)
+            row+=1
+        self.refreshVersionsUsingThread()

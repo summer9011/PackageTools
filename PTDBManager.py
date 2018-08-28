@@ -77,42 +77,52 @@ class PTDBManager:
         self.dbCursor.execute("delete from pt_module;")
         self.dbCursor.execute("delete from pt_spec_repo;")
         self.dbCursor.execute("delete from pt_code_repo;")
+        self.dbConnect.commit()
+
         self.dbCursor.execute("update sqlite_sequence set seq = 0 where name = \"pt_module\";")
         self.dbCursor.execute("update sqlite_sequence set seq = 0 where name = \"pt_spec_repo\";")
         self.dbCursor.execute("update sqlite_sequence set seq = 0 where name = \"pt_code_repo\";")
+        self.dbConnect.commit()
 
         for dict in moduleData:
             names = []
             vals = []
             for key in dict:
                 names.append(key)
-                vals.append(dict[key])
+                vals.append("\"%s\"" % dict[key])
 
             nameStr = ",".join(str(name) for name in names)
             valStr = ",".join(str(val) for val in vals)
-            self.dbCursor.execute("""insert into "pt_module"(%s) values (%s);""" % (nameStr, valStr))
+            sql = """insert into "pt_module"(%s) values (%s);""" % (nameStr, valStr)
+            self.dbCursor.execute(sql)
+            self.dbConnect.commit()
 
         for dict in specRepoData:
             names = []
             vals = []
             for key in dict:
                 names.append(key)
-                vals.append(dict[key])
+                vals.append("\"%s\"" % dict[key])
 
             nameStr = ",".join(str(name) for name in names)
             valStr = ",".join(str(val) for val in vals)
-            self.dbCursor.execute("""insert into "pt_spec_repo"(%s) values (%s);""" % (nameStr, valStr))
+            sql = """insert into "pt_spec_repo"(%s) values (%s);""" % (nameStr, valStr)
+            self.dbCursor.execute(sql)
+            self.dbConnect.commit()
 
         for dict in codeRepoData:
             names = []
             vals = []
             for key in dict:
                 names.append(key)
-                vals.append(dict[key])
+                vals.append("\"%s\"" % dict[key])
 
             nameStr = ",".join(str(name) for name in names)
             valStr = ",".join(str(val) for val in vals)
-            self.dbCursor.execute("""insert into "pt_code_repo"(%s) values (%s);""" % (nameStr, valStr))
+            sql = """insert into "pt_code_repo"(%s) values (%s);""" % (nameStr, valStr)
+            self.dbCursor.execute(sql)
+            self.dbConnect.commit()
+
         callback(True)
 
     def exportData(self, filePath, callback):
