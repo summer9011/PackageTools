@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import wx
 import os
-from PTCommand import PTCommand
-from PTDBManager import PTDBManager
-from PTCommandPath import PTCommandPath
-from PTCommandPathConfig import PTCommandPathConfig
+from tools.PTCommand import PTCommand
+from tools.PTDBManager import PTDBManager
+from models.PTCommandPath import PTCommandPath
+from tools.PTCommandPathConfig import PTCommandPathConfig
 
 class PTEnvironmentWindow (wx.Window):
     svnCommandText = None
@@ -61,6 +61,7 @@ class PTEnvironmentWindow (wx.Window):
         sizer.Add(hBox1, 0, wx.LEFT|wx.TOP, 10)
         sizer.Add(self.checkPodCommandBtn, 0, wx.LEFT|wx.TOP, 10)
         sizer.Add(hBox2, 0, wx.LEFT|wx.TOP, 10)
+        sizer.Add((0,30))
         sizer.Add(self.importDataBtn, 0, wx.LEFT|wx.TOP, 10)
         sizer.Add(self.exportDataBtn, 0, wx.LEFT|wx.TOP, 10)
 

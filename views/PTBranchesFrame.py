@@ -2,12 +2,11 @@
 import wx
 import os
 import wx.grid
-import PTModuleHelper
-from PTDBManager import PTDBManager
-from PTModuleBranch import PTModuleBranch
-from PTModuleBranch import PTRemoteModuleBranch
-from PTCommand import PTCommand
-from PTModule import PTModule
+from tools import PTModuleHelper
+from tools.PTDBManager import PTDBManager
+from models.PTModuleBranch import PTModuleBranch
+from tools.PTCommand import PTCommand
+from models.PTModule import PTModule
 
 class PTBranchesFrame (wx.Frame):
     moduleBranchesTable = None

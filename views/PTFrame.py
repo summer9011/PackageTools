@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 import wx
 
-from PTCommand import PTCommand
+from tools.PTCommand import PTCommand
 
-from PTEnvironmentWindow import PTEnvironmentWindow
-from PTCodeRepoWindow import PTCodeRepoWindow
-from PTSpecRepoWindow import PTSpecRepoWindow
-from PTModuleWindow import PTModuleWindow
-from PTLoggerWindow import PTLoggerWindow
+from views.PTEnvironmentWindow import PTEnvironmentWindow
+from views.PTCodeRepoWindow import PTCodeRepoWindow
+from views.PTSpecRepoWindow import PTSpecRepoWindow
+from views.PTModuleWindow import PTModuleWindow
+from views.PTLoggerWindow import PTLoggerWindow
 
-from PTAddModuleFrame import PTAddModuleFrame
-from PTAddCodeRepoFrame import PTAddCodeRepoFrame
-from PTAddSpecRepoFrame import PTAddSpecRepoFrame
-from PTBranchesFrame import PTBranchesFrame
+from views.PTAddModuleFrame import PTAddModuleFrame
+from views.PTAddCodeRepoFrame import PTAddCodeRepoFrame
+from views.PTAddSpecRepoFrame import PTAddSpecRepoFrame
+from views.PTBranchesFrame import PTBranchesFrame
 
 class PTFrame (wx.Frame):
     environmentWindow = None

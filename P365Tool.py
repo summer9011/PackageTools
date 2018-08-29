@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import wx
-import PTFrame
+from views import PTFrame
+
 
 class PTApp (wx.App):
     def MainLoop(self):

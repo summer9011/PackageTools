@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import wx
-from PTDBManager import PTDBManager
-from PTSpecRepo import PTSpecRepo
+from tools.PTDBManager import PTDBManager
+from models.PTSpecRepo import PTSpecRepo
 
 class PTAddSpecRepoFrame (wx.Frame):
     specRepoNameTextTip = None

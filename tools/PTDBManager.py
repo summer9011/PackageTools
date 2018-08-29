@@ -2,11 +2,11 @@
 import os
 import sqlite3
 import json
-from PTModule import PTModule
-from PTSpecRepo import PTSpecRepo
-from PTCodeRepo import PTCodeRepo
-from PTModuleBranch import PTModuleBranch
-from PTCommandPath import PTCommandPath
+from models.PTModule import PTModule
+from models.PTSpecRepo import PTSpecRepo
+from models.PTCodeRepo import PTCodeRepo
+from models.PTModuleBranch import PTModuleBranch
+from models.PTCommandPath import PTCommandPath
 
 class PTDBManager:
     __instance = None

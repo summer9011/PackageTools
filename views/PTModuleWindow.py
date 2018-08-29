@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 import wx
 import wx.grid
-import PTModuleHelper
-from PTDBManager import PTDBManager
-from PTCommand import PTCommand
+from tools import PTModuleHelper
+from tools.PTDBManager import PTDBManager
+from tools.PTCommand import PTCommand
 
 class PTModuleWindow (wx.Window):
     moduleTable = None

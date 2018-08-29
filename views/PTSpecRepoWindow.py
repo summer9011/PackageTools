@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import wx
 import wx.grid
-from PTDBManager import PTDBManager
+from tools.PTDBManager import PTDBManager
 
 class PTSpecRepoWindow (wx.Window):
     specRepoTable = None

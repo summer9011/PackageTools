@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import wx
 import os
-from PTDBManager import PTDBManager
-from PTModule import  PTModule
+from tools.PTDBManager import PTDBManager
+from models.PTModule import  PTModule
 
 class PTAddModuleFrame (wx.Frame):
     localPathTip = None

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import wx
-from PTDBManager import PTDBManager
-from PTCodeRepo import PTCodeRepo
+from tools.PTDBManager import PTDBManager
+from models.PTCodeRepo import PTCodeRepo
 
 class PTAddCodeRepoFrame (wx.Frame):
     codeRepoNameTextTip = None

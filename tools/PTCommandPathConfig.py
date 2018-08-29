@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from PTDBManager import PTDBManager
-from PTCommandPath import PTCommandPath
+
 
 class PTCommandPathConfig:
     __instance = None
