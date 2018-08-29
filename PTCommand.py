@@ -23,29 +23,53 @@ class PTCommand:
         codeRepoInfo = PTDBManager().getCodeRepo(module.codeRepoId)
         specRepoInfo = PTDBManager().getSpecRepo(module.specRepoId)
         if codeRepoInfo != None and specRepoInfo != None:
-            moduelRemotePath = os.path.join(codeRepoInfo.remotePath, module.name)
+            moduelRemotePath = "%s/%s" % (codeRepoInfo.remotePath, module.name)
             svnCopyToTag = "svn copy %s/trunk %s/tags/%s -m \"release to %s\"" % (moduelRemotePath, moduelRemotePath, module.localVersion, module.localVersion)
             self.logCommand(svnCopyToTag, logCallback)
             copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
             self.logOutput(copyRet, copyOutput, logCallback)
             if copyRet == 0:
-                podPush = "cd %s; /usr/local/bin/pod repo-svn push %s %s.podspec" % (
-                    module.localPath, specRepoInfo.name, module.name)
-                self.logCommand(podPush, logCallback)
-                pushRet, pushOutput = commands.getstatusoutput(podPush)
-                self.logOutput(pushRet, pushOutput, logCallback)
-
-                if pushRet == 0:
-                    wx.CallAfter(logCallback, "publish module %s successfully!!!\n" % module.name)
-                    wx.CallAfter(completeCallback, True, module)
-                else:
-                    wx.CallAfter(logCallback, "push %s's podspec to repo failed!!!\n" % module.name)
-                    wx.CallAfter(completeCallback, False, module)
+                self.publishPodspecWithShell(module.localPath, module, specRepoInfo, logCallback, completeCallback)
             else:
                 wx.CallAfter(logCallback, "copy module %s trunk to tags error!!!\n" % module.name)
                 wx.CallAfter(completeCallback, False, module)
         else:
             wx.CallAfter(logCallback, "podspec repo not exist!!!\n")
+            wx.CallAfter(completeCallback, False, module)
+
+    def publishModuleBranch(self, module, branchInfo, branchBindInfo, logCallback, completeCallback):
+        thread.start_new_thread(self.publishModuleBranchWithShell, (module, branchInfo, branchBindInfo, logCallback, completeCallback))
+
+    def publishModuleBranchWithShell(self, module, branchInfo, branchBindInfo, logCallback, completeCallback):
+        codeRepoInfo = PTDBManager().getCodeRepo(module.codeRepoId)
+        specRepoInfo = PTDBManager().getSpecRepo(module.specRepoId)
+        if codeRepoInfo != None and specRepoInfo != None:
+            moduleRemotePath = "%s/%s" % (codeRepoInfo.remotePath, module.name)
+            moduleBranchRemotePath = "%s/branches/%s" % (moduleRemotePath, branchInfo.remoteName)
+            svnCopyToTag = "svn copy %s %s/tags/%s -m \"release to %s\"" % (moduleBranchRemotePath, moduleRemotePath, branchInfo.version, branchInfo.version)
+            self.logCommand(svnCopyToTag, logCallback)
+            copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
+            self.logOutput(copyRet, copyOutput, logCallback)
+            if copyRet == 0:
+                self.publishPodspecWithShell(branchBindInfo.localPath, module, specRepoInfo, logCallback, completeCallback)
+            else:
+                wx.CallAfter(logCallback, "copy module %s branch %s to tags error!!!\n" % (module.name, branchInfo.remoteName))
+                wx.CallAfter(completeCallback, False, module)
+        else:
+            wx.CallAfter(logCallback, "podspec repo not exist!!!\n")
+            wx.CallAfter(completeCallback, False, module)
+
+    def publishPodspecWithShell(self, localPath, module, specRepoInfo, logCallback, completeCallback):
+        podPush = "cd %s; /usr/local/bin/pod repo-svn push %s %s.podspec" % (localPath, specRepoInfo.name, module.name)
+        self.logCommand(podPush, logCallback)
+        pushRet, pushOutput = commands.getstatusoutput(podPush)
+        self.logOutput(pushRet, pushOutput, logCallback)
+
+        if pushRet == 0:
+            wx.CallAfter(logCallback, "publish module %s successfully!!!\n" % module.name)
+            wx.CallAfter(completeCallback, True, module)
+        else:
+            wx.CallAfter(logCallback, "push %s's podspec to repo failed!!!\n" % module.name)
             wx.CallAfter(completeCallback, False, module)
 
     def addSpecRepo(self, specRepo, logCallback, completeCallback):

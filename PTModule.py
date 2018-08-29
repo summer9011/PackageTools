@@ -12,7 +12,8 @@ class PTModule:
 
     isPublishing = False
 
-    def checkVersionBigger(self, str1, str2):
+    @classmethod
+    def checkVersionBigger(cls, str1, str2):
         bigger = False
 
         str1List = str1.split('.')
@@ -42,11 +43,11 @@ class PTModule:
     def isNewer(self):
         newer = False
         if len(self.localVersion) > 0 and len(self.remoteVersion) > 0:
-            newer = self.checkVersionBigger(self.localVersion, self.remoteVersion)
+            newer = PTModule.checkVersionBigger(self.localVersion, self.remoteVersion)
         return newer
 
     def isOlder(self):
         older = False
         if len(self.localVersion) > 0 and len(self.remoteVersion) > 0:
-            older = self.checkVersionBigger(self.remoteVersion, self.localVersion)
+            older = PTModule.checkVersionBigger(self.remoteVersion, self.localVersion)
         return older

@@ -6,6 +6,8 @@ class PTModuleBranch:
     localPath = None
     moduleId = None
 
+    localVersion = ""
+
 class PTRemoteModuleBranch:
     remoteName = None
-    remotePath = None
+    version = None
