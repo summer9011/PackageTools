@@ -94,7 +94,8 @@ class PTBranchesFrame (wx.Frame):
 
     def AppendModuleBranch(self, row, moduleRemoteBranch):
         bindInfo = self.GetBindInfoWithRemoteName(moduleRemoteBranch.remoteName)
-        bindInfo.localVersion = PTModuleHelper.getBranchLocalVersion(bindInfo, self.logCallback)
+        if bindInfo != None:
+            bindInfo.localVersion = PTModuleHelper.getBranchLocalVersion(bindInfo, self.logCallback)
 
         self.moduleBranchesTable.AppendRows(1)
 
@@ -116,7 +117,10 @@ class PTBranchesFrame (wx.Frame):
         self.moduleBranchesTable.SetReadOnly(row, 2)
         self.moduleBranchesTable.SetCellAlignment(row, 2, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
-        self.moduleBranchesTable.SetCellValue(row, 3, bindInfo.localVersion)
+        localVersion = ""
+        if bindInfo != None:
+            localVersion = bindInfo.localVersion
+        self.moduleBranchesTable.SetCellValue(row, 3, localVersion)
         self.moduleBranchesTable.SetReadOnly(row, 3)
         self.moduleBranchesTable.SetCellAlignment(row, 3, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
