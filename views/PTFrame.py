@@ -93,7 +93,10 @@ class PTFrame (wx.Frame):
         self.moduleWindow.addModule(moduleList[0])
 
     def OnBranchesCallback(self, module):
-        self.branchesFrame = PTBranchesFrame(self, self.OnLogCallback, module)
+        self.branchesFrame = PTBranchesFrame(self, self.OnLogCallback, self.OnBranchesPublishCompleteCallback, module)
+
+    def OnBranchesPublishCompleteCallback(self, result, module):
+        self.moduleWindow.OnPublishModuleCompleteCallback(result, module)
 
     # Environment callback
     def OnEnvironmentImportCallback(self):

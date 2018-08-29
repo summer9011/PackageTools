@@ -61,7 +61,7 @@ class PTCommand:
             wx.CallAfter(completeCallback, False, module)
 
     def publishPodspecWithShell(self, localPath, module, specRepoInfo, logCallback, completeCallback):
-        podPush = "cd %s; %s repo-svn push %s %s.podspec" % (PTCommandPathConfig().command("pod"), localPath, specRepoInfo.name, module.name)
+        podPush = "cd %s; %s repo-svn push %s %s.podspec" % (localPath, PTCommandPathConfig().command("pod"), specRepoInfo.name, module.name)
         self.logCommand(podPush, logCallback)
         pushRet, pushOutput = commands.getstatusoutput(podPush)
         self.logOutput(pushRet, pushOutput, logCallback)

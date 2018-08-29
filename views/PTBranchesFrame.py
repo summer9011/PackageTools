@@ -20,8 +20,9 @@ class PTBranchesFrame (wx.Frame):
 
     module = None
     logCallback = None
+    callback = None
 
-    def __init__(self, parent, logCallback, module):
+    def __init__(self, parent, logCallback, callback, module):
         windowSize = wx.DisplaySize()
 
         size = (800,500)
@@ -33,6 +34,7 @@ class PTBranchesFrame (wx.Frame):
         self.moduleBranchesBindsData = PTDBManager().getModuleBranches(module.id)
         self.module = module
         self.logCallback = logCallback
+        self.callback = callback
         self.SetupUI()
         self.refreshBranchesUsingThread()
 
@@ -221,8 +223,9 @@ class PTBranchesFrame (wx.Frame):
                 self.module.name, branchInfo.remoteName, bindInfo.localVersion, remoteBranchVersion),
                           u"You should commit all changes using SVN Tools.", wx.OK)
 
-    def OnPublishBranchCompleteCallback(self, bindInfo):
+    def OnPublishBranchCompleteCallback(self, result, bindInfo):
         self.refreshBranchesUsingThread()
+        self.callback(result, self.module)
 
     def refreshBranchesUsingThread(self):
         PTModuleHelper.getModuleRemoteBranches(self.module, self.logCallback, self.getModuleBranchesCallback)
