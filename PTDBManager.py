@@ -6,6 +6,7 @@ from PTModule import PTModule
 from PTSpecRepo import PTSpecRepo
 from PTCodeRepo import PTCodeRepo
 from PTModuleBranch import PTModuleBranch
+from PTCommandPath import PTCommandPath
 
 class PTDBManager:
     __instance = None
@@ -33,6 +34,7 @@ class PTDBManager:
                 self.createSpecTable()
                 self.createCodeTable()
                 self.createModuleBranchesTable()
+                self.createCommandPathTable()
                 self.dbConnect.commit()
 
     # Add module table
@@ -71,6 +73,14 @@ class PTDBManager:
           "remote_name" TEXT NOT NULL DEFAULT '',
           "local_path" TEXT NOT NULL DEFAULT '',
           "module_id" INTEGER NOT NULL DEFAULT 0
+        );""")
+
+    # Add command path config table
+    def createCommandPathTable(self):
+        self.dbCursor.execute("""CREATE TABLE IF NOT EXISTS "pt_command_path" (
+          "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          "name" TEXT NOT NULL DEFAULT '',
+          "command_path" TEXT NOT NULL DEFAULT ''
         );""")
 
     # Import & export
@@ -362,5 +372,36 @@ class PTDBManager:
     def deleteModuleBranches(self, moduleId):
         self.openDB()
         self.dbCursor.execute("delete from pt_module_branch where module_id = %d;" % moduleId)
+        self.dbConnect.commit()
+        return True
+
+    # Command path config
+    def getCommandPathDict(self):
+        self.openDB()
+        self.dbCursor.execute("select * from pt_command_path;")
+        results = self.dbCursor.fetchall()
+
+        commandPathDict = {}
+        for row in results:
+            commandPath = PTCommandPath()
+            commandPath.id = row[0]
+            commandPath.name = row[1]
+            commandPath.commandPath = row[2]
+            commandPathDict[commandPath.name] = commandPath.commandPath
+        return commandPathDict
+
+    def addCommandPath(self, commandPath):
+        self.openDB()
+        self.dbCursor.execute("select * from pt_command_path where name = \"%s\"" % commandPath.name)
+        result = self.dbCursor.fetchone()
+        if result == None:
+            self.dbCursor.execute("""insert into "pt_command_path"(
+                    "name",
+                    "command_path"
+                    ) values ("%s","%s");""" % (commandPath.name,
+                                                commandPath.commandPath))
+            commandPath.id = self.dbCursor.lastrowid
+        else:
+            self.dbCursor.execute("update pt_command_path set command_path = \"%s\" where name = \"%s\"" % (commandPath.commandPath, commandPath.name))
         self.dbConnect.commit()
         return True

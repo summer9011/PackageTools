@@ -4,6 +4,7 @@ import thread
 import wx
 import os
 from PTDBManager import PTDBManager
+from PTCommandPathConfig import PTCommandPathConfig
 
 class PTCommand:
     __instance = None
@@ -24,7 +25,7 @@ class PTCommand:
         specRepoInfo = PTDBManager().getSpecRepo(module.specRepoId)
         if codeRepoInfo != None and specRepoInfo != None:
             moduelRemotePath = "%s/%s" % (codeRepoInfo.remotePath, module.name)
-            svnCopyToTag = "svn copy %s/trunk %s/tags/%s -m \"release to %s\"" % (moduelRemotePath, moduelRemotePath, module.localVersion, module.localVersion)
+            svnCopyToTag = "%s copy %s/trunk %s/tags/%s -m \"release to %s\"" % (PTCommandPathConfig().command("svn"), moduelRemotePath, moduelRemotePath, module.localVersion, module.localVersion)
             self.logCommand(svnCopyToTag, logCallback)
             copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
             self.logOutput(copyRet, copyOutput, logCallback)
@@ -46,7 +47,7 @@ class PTCommand:
         if codeRepoInfo != None and specRepoInfo != None:
             moduleRemotePath = "%s/%s" % (codeRepoInfo.remotePath, module.name)
             moduleBranchRemotePath = "%s/branches/%s" % (moduleRemotePath, branchInfo.remoteName)
-            svnCopyToTag = "svn copy %s %s/tags/%s -m \"release to %s\"" % (moduleBranchRemotePath, moduleRemotePath, branchInfo.version, branchInfo.version)
+            svnCopyToTag = "%s copy %s %s/tags/%s -m \"release to %s\"" % (PTCommandPathConfig().command("svn"), moduleBranchRemotePath, moduleRemotePath, branchInfo.version, branchInfo.version)
             self.logCommand(svnCopyToTag, logCallback)
             copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
             self.logOutput(copyRet, copyOutput, logCallback)
@@ -60,7 +61,7 @@ class PTCommand:
             wx.CallAfter(completeCallback, False, module)
 
     def publishPodspecWithShell(self, localPath, module, specRepoInfo, logCallback, completeCallback):
-        podPush = "cd %s; /usr/local/bin/pod repo-svn push %s %s.podspec" % (localPath, specRepoInfo.name, module.name)
+        podPush = "cd %s; %s repo-svn push %s %s.podspec" % (PTCommandPathConfig().command("pod"), localPath, specRepoInfo.name, module.name)
         self.logCommand(podPush, logCallback)
         pushRet, pushOutput = commands.getstatusoutput(podPush)
         self.logOutput(pushRet, pushOutput, logCallback)
@@ -76,7 +77,7 @@ class PTCommand:
         thread.start_new_thread(self.addSpecRepoWithShell, (specRepo, logCallback, completeCallback))
 
     def addSpecRepoWithShell(self, specRepo, logCallback, completeCallback):
-        addSpecRepo = "/usr/local/bin/pod repo-svn add %s %s" % (specRepo.name, specRepo.remotePath)
+        addSpecRepo = "%s repo-svn add %s %s" % (PTCommandPathConfig().command("pod"), specRepo.name, specRepo.remotePath)
         self.logCommand(addSpecRepo, logCallback)
         copyRet, copyOutput = commands.getstatusoutput(addSpecRepo)
         self.logOutput(copyRet, copyOutput, logCallback)
@@ -87,9 +88,20 @@ class PTCommand:
         thread.start_new_thread(self.checkPodCommandWithShell, (logCallback, completeCallback))
 
     def checkPodCommandWithShell(self, logCallback, completeCallback):
-        testPod = "cd $HOME; /usr/local/bin/pod --version"
+        testPod = "cd $HOME; %s --version" % PTCommandPathConfig().command("pod")
         self.logCommand(testPod, logCallback)
         copyRet, copyOutput = commands.getstatusoutput(testPod)
+        self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(completeCallback, True)
+
+    # Check svn command
+    def checkSvnCommand(self, logCallback, completeCallback):
+        thread.start_new_thread(self.checkSvnCommandWithShell, (logCallback, completeCallback))
+
+    def checkSvnCommandWithShell(self, logCallback, completeCallback):
+        testSvn = "cd $HOME; %s --version" % PTCommandPathConfig().command("svn")
+        self.logCommand(testSvn, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(testSvn)
         self.logOutput(copyRet, copyOutput, logCallback)
         wx.CallAfter(completeCallback, True)
 

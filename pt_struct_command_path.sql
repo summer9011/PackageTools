@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS "pt_command_path" (
+  "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  "name" TEXT NOT NULL DEFAULT '',
+  "command_path" TEXT NOT NULL DEFAULT ''
+);
