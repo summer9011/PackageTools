@@ -23,13 +23,8 @@ class PTBranchesFrame (wx.Frame):
     callback = None
 
     def __init__(self, parent, logCallback, callback, module):
-        windowSize = wx.DisplaySize()
-
-        size = (800,500)
-        pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
-        wx.Frame.__init__(self, parent, wx.ID_ANY, "%s Branches" % module.name, pos=pos, size=size)
+        super(PTBranchesFrame, self).__init__(parent, wx.ID_ANY, "%s Branches" % module.name, size=(800,500))
         self.SetBackgroundColour(wx.WHITE)
-        self.SetMinSize(size)
 
         self.moduleBranchesBindsData = PTDBManager().getModuleBranches(module.id)
         self.module = module

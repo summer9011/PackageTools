@@ -7,7 +7,7 @@ class PTLoggerWindow (wx.Window):
     logArea = None
 
     def __init__(self, parent):
-        wx.Window.__init__(self, parent)
+        super(PTLoggerWindow, self).__init__(parent)
         self.SetupUI()
 
     def SetupUI(self):

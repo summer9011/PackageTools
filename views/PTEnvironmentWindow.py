@@ -22,7 +22,7 @@ class PTEnvironmentWindow (wx.Window):
     importCallback = None
 
     def __init__(self, parent, logCallback, importCallback):
-        wx.Window.__init__(self, parent)
+        super(PTEnvironmentWindow, self).__init__(parent)
         self.logCallback = logCallback
         self.importCallback = importCallback
         self.SetupUI()

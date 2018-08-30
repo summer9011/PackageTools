@@ -15,7 +15,7 @@ class PTCodeRepoWindow (wx.Window):
     addCodeRepoCallback = None
 
     def __init__(self, parent, logCallback, addCodeRepoCallback):
-        wx.Window.__init__(self, parent)
+        super(PTCodeRepoWindow, self).__init__(parent)
 
         self.codeRepoData = PTDBManager().getCodeRepoList()
         self.logCallback = logCallback

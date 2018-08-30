@@ -21,7 +21,7 @@ class PTModuleWindow (wx.Window):
     branchesCallback = None
 
     def __init__(self, parent, logCallback, addModuleCallback, branchesCallback):
-        wx.Window.__init__(self, parent)
+        super(PTModuleWindow, self).__init__(parent)
 
         self.moduleData = PTDBManager().getModuleList()
         self.logCallback = logCallback

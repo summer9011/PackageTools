@@ -15,7 +15,7 @@ class PTSpecRepoWindow (wx.Window):
     addSpecRepoCallback = None
 
     def __init__(self, parent, logCallback, addSpecRepoCallback):
-        wx.Window.__init__(self, parent)
+        super(PTSpecRepoWindow, self).__init__(parent)
 
         self.specRepoData = PTDBManager().getSpecRepoList()
         self.logCallback = logCallback

@@ -19,12 +19,7 @@ class PTAddCodeRepoFrame (wx.Frame):
     selectedType = None
 
     def __init__(self, parent, callback):
-        windowSize = wx.DisplaySize()
-
-        size = (600,290)
-        pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
-        wx.Frame.__init__(self, parent, wx.ID_ANY, u"Add Code Repo", pos=pos, size=size)
-        self.SetMinSize(size)
+        super(PTAddCodeRepoFrame, self).__init__(parent, wx.ID_ANY, u"Add Code Repo", size=(600,290))
 
         self.callback = callback
 
@@ -78,6 +73,7 @@ class PTAddCodeRepoFrame (wx.Frame):
         sizer.Add(self.addBtn, 0, wx.CENTER|wx.BOTTOM, 30)
 
         self.SetSizer(sizer)
+        self.CentreOnParent()
         self.Show(True)
 
     def OnChoiceType(self, event):

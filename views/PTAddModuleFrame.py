@@ -24,12 +24,7 @@ class PTAddModuleFrame (wx.Frame):
     selectedSpecRepo = None
 
     def __init__(self, parent, callback, codeRepoList, specRepoList):
-        windowSize = wx.DisplaySize()
-
-        size = (600,220)
-        pos = ((windowSize[0] - size[0])/2,(windowSize[1] - size[1])/2)
-        wx.Frame.__init__(self, parent, wx.ID_ANY, u"Add module", pos=pos, size=size)
-        self.SetMinSize(size)
+        super(PTAddModuleFrame, self).__init__(parent, wx.ID_ANY, u"Add module", size=(600,220))
 
         self.codeRepoList = codeRepoList
         self.specRepoList = specRepoList
@@ -86,7 +81,9 @@ class PTAddModuleFrame (wx.Frame):
         sizer.Add(self.addBtn, 0, wx.CENTER|wx.BOTTOM, 30)
 
         self.SetSizer(sizer)
+        self.CentreOnParent()
         self.Show(True)
+        self.ShowWithoutActivating()
 
     def OnChoiceCodeRepo(self, event):
         if event.Selection > 0:
