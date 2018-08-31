@@ -29,107 +29,89 @@ class PTFrame (wx.Frame):
     addModuleFrame = None
     branchesFrame = None
 
+    loggerBtn = None
+
     def __init__(self):
         super(PTFrame, self).__init__(None, wx.ID_ANY, u"iOS Develop Tools", size=(800, 600))
-        self.SetupUI2()
+        self.SetupUI()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.CentreOnScreen()
         self.Show(True)
+
+        self.OnDisplayLogger(None)
 
     def OnClose(self, event):
         self.mgr.UnInit()
         self.Destroy()
 
-    def SetupUI2(self):
-        self.SetBackgroundColour(wx.WHITE)
+    def CreateContentWindow(self, panel):
+        contentWindow = wx.Window(panel)
 
-        self.mgr = wx.aui.AuiManager(self)
+        self.mgr = wx.aui.AuiManager(contentWindow)
 
-        bottomBtnsViewPanel = wx.Panel(self)
-        bottomBtnsView = wx.Window(bottomBtnsViewPanel, wx.ID_ANY, size = (0,40))
+        panel = wx.Panel(contentWindow)
 
-        btn = wx.Button(bottomBtnsViewPanel, wx.ID_ANY, u"Logger")
-        vBox = wx.BoxSizer(wx.HORIZONTAL)
-        vBox.Add(btn, 0, wx.LEFT, 10)
-
-        bottomBtnsViewPanelBox = wx.BoxSizer(wx.VERTICAL)
-        bottomBtnsViewPanelBox.Add(vBox, 0)
-        # bottomBtnsViewPanelBox.Add(bottomBtnsView, 0)
-        bottomBtnsViewPanel.SetSizerAndFit(bottomBtnsViewPanelBox)
-
-        # Info
-        # infoPanel = wx.Panel(self)
-        # infoPanel.SetBackgroundColour(wx.WHITE)
-        #
-        # topNotebook = wx.Notebook(infoPanel, wx.ID_ANY)
-        # self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback, self.OnAddModuleCallback, self.OnBranchesCallback)
-        # topNotebook.AddPage(self.moduleWindow, u"Module List")
-        # self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
-        # topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
-        # self.codeRepoWindow = PTCodeRepoWindow(topNotebook, self.OnLogCallback, self.OnAddCodeRepoCallback)
-        # topNotebook.AddPage(self.codeRepoWindow, u"Code Repo List")
-        # self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback, self.OnEnvironmentImportCallback)
-        # topNotebook.AddPage(self.environmentWindow, u"Environment")
-        # topNotebook.SetSelection(0)
-        #
-        # infoBox = wx.BoxSizer(wx.HORIZONTAL)
-        # infoBox.Add(topNotebook, 1, wx.EXPAND)
-        # infoPanel.SetSizerAndFit(infoBox)
-        #
-        # centreInfo = wx.aui.AuiPaneInfo().CenterPane()
-        # centreInfo.Name("content")
-        # centreInfo.CloseButton(False)
-        # centreInfo.MaximizeButton(True)
-        # self.mgr.AddPane(infoPanel, centreInfo)
-        #
-        # # Log
-        # logPanel = wx.Panel(self)
-        # self.loggerWindow = PTLoggerWindow(logPanel)
-        #
-        # logBox = wx.BoxSizer(wx.HORIZONTAL)
-        # logBox.Add(self.loggerWindow, 1, wx.EXPAND)
-        # logPanel.SetSizerAndFit(logBox)
-        #
-        # bottomInfo = wx.aui.AuiPaneInfo().Bottom()
-        # bottomInfo.Name("logger")
-        # bottomInfo.Caption("Logger")
-        # bottomInfo.CloseButton(False)
-        # bottomInfo.MinimizeButton(True)
-        # self.mgr.AddPane(logPanel, bottomInfo)
-        #
-        # self.mgr.Update()
-
-
-    def SetupUI(self):
-        panel = wx.Panel(self)
-
-        parentWindow = wx.SplitterWindow(panel, wx.ID_ANY, style=wx.SP_NOBORDER)
-        parentWindow.SetBackgroundColour(wx.WHITE)
-
-        # Top window
-        topNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
+        topNotebook = wx.Notebook(panel, wx.ID_ANY)
         self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback, self.OnAddModuleCallback, self.OnBranchesCallback)
         topNotebook.AddPage(self.moduleWindow, u"Module List")
         self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
         topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
         self.codeRepoWindow = PTCodeRepoWindow(topNotebook, self.OnLogCallback, self.OnAddCodeRepoCallback)
         topNotebook.AddPage(self.codeRepoWindow, u"Code Repo List")
-        self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback, self.OnEnvironmentImportCallback)
+        self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback)
         topNotebook.AddPage(self.environmentWindow, u"Environment")
         topNotebook.SetSelection(0)
 
-        # Bottom window
-        bottomNotebook = wx.Notebook(parentWindow, wx.ID_ANY)
-        self.loggerWindow = PTLoggerWindow(bottomNotebook)
-        bottomNotebook.AddPage(self.loggerWindow, u"Logger")
+        infoBox = wx.BoxSizer(wx.HORIZONTAL)
+        infoBox.Add(topNotebook, 1, wx.EXPAND)
+        panel.SetSizerAndFit(infoBox)
 
-        parentWindow.SplitHorizontally(topNotebook, bottomNotebook, self.GetSize()[1] / 2)
+        centrePane = wx.aui.AuiPaneInfo().CenterPane().Name("content").CloseButton(False)
+        self.mgr.AddPane(panel, centrePane)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(parentWindow, 1, flag=wx.EXPAND)
+        panel2 = wx.Panel(contentWindow)
+        self.loggerWindow = PTLoggerWindow(panel2)
 
-        panel.SetSizer(sizer)
-        panel.Fit()
+        logBox = wx.BoxSizer(wx.HORIZONTAL)
+        logBox.Add(self.loggerWindow, 1, wx.EXPAND)
+        panel2.SetSizerAndFit(logBox)
+
+        bottomPane = wx.aui.AuiPaneInfo().Bottom().Name("logger").CloseButton(False).MinSize((70, 140))
+        self.mgr.AddPane(panel2, bottomPane)
+
+        self.mgr.Update()
+
+        return contentWindow
+
+    def CreateBottomWindow(self, panel):
+        bottomWindow = wx.Window(panel)
+        self.loggerBtn = wx.Button(bottomWindow, wx.ID_ANY, u"Show Logger")
+        self.loggerBtn.Bind(wx.EVT_BUTTON, self.OnDisplayLogger)
+        hBox = wx.BoxSizer(wx.HORIZONTAL)
+        hBox.Add(self.loggerBtn, 0)
+        bottomWindow.SetSizerAndFit(hBox)
+
+        return bottomWindow
+
+    def OnDisplayLogger(self, event):
+        loggerPane = self.mgr.GetPane("logger")
+        isShown = loggerPane.IsShown()
+        if isShown == True:
+            self.loggerBtn.SetLabelText(u"Show Logger")
+            loggerPane.Hide()
+        else:
+            self.loggerBtn.SetLabelText(u"Hide Logger")
+            loggerPane.Show(True)
+        self.mgr.Update()
+
+    def SetupUI(self):
+        self.SetBackgroundColour(wx.WHITE)
+
+        panel = wx.Panel(self)
+        vBox = wx.BoxSizer(wx.VERTICAL)
+        vBox.Add(self.CreateContentWindow(panel), 1, wx.EXPAND)
+        vBox.Add(self.CreateBottomWindow(panel), 0, wx.EXPAND)
+        panel.SetSizerAndFit(vBox)
 
     # Add code repo callback
     def OnAddCodeRepoCallback(self):
@@ -163,12 +145,6 @@ class PTFrame (wx.Frame):
 
     def OnBranchesPublishCompleteCallback(self, result, module):
         self.moduleWindow.OnPublishModuleCompleteCallback(result, module)
-
-    # Environment callback
-    def OnEnvironmentImportCallback(self):
-        self.moduleWindow.reCreateData()
-        self.specRepoWindow.reCreateData()
-        self.codeRepoWindow.reCreateData()
 
     # Log callback
     def OnLogCallback(self, message):

@@ -121,14 +121,3 @@ class PTCodeRepoWindow (wx.Window):
         self.ClearSelection()
         self.codeRepoData.append(codeRepo)
         self.AppendCodeRepo(len(self.codeRepoData)-1, codeRepo)
-
-    def reCreateData(self):
-        if len(self.codeRepoData) > 0:
-            self.codeRepoTable.DeleteRows(0, len(self.codeRepoData))
-            self.codeRepoTable.ClearSelection()
-
-        self.codeRepoData = PTDBManager().getCodeRepoList()
-        row = 0
-        for codeRepo in self.codeRepoData:
-            self.AppendCodeRepo(row, codeRepo)
-            row += 1

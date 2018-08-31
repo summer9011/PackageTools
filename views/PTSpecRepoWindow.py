@@ -114,14 +114,3 @@ class PTSpecRepoWindow (wx.Window):
         self.ClearSelection()
         self.specRepoData.append(specRepo)
         self.AppendSpecRepo(len(self.specRepoData)-1, specRepo)
-
-    def reCreateData(self):
-        if len(self.specRepoData) > 0:
-            self.specRepoTable.DeleteRows(0, len(self.specRepoData))
-            self.specRepoTable.ClearSelection()
-
-        self.specRepoData = PTDBManager().getSpecRepoList()
-        row = 0
-        for specRepo in self.specRepoData:
-            self.AppendSpecRepo(row, specRepo)
-            row+=1

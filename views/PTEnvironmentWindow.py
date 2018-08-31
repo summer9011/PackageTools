@@ -2,8 +2,6 @@
 import wx
 import os
 from tools.PTCommand import PTCommand
-from tools.PTDBManager import PTDBManager
-from models.PTCommandPath import PTCommandPath
 from tools.PTCommandPathConfig import PTCommandPathConfig
 
 class PTEnvironmentWindow (wx.Window):
@@ -15,16 +13,11 @@ class PTEnvironmentWindow (wx.Window):
     setPodCommandBtn = None
     checkPodCommandBtn = None
 
-    importDataBtn = None
-    exportDataBtn = None
-
     logCallback = None
-    importCallback = None
 
-    def __init__(self, parent, logCallback, importCallback):
+    def __init__(self, parent, logCallback):
         super(PTEnvironmentWindow, self).__init__(parent)
         self.logCallback = logCallback
-        self.importCallback = importCallback
         self.SetupUI()
 
     def SetupUI(self):
@@ -50,20 +43,11 @@ class PTEnvironmentWindow (wx.Window):
         self.checkPodCommandBtn = wx.Button(self, wx.ID_ANY, u"Check `pod` Command")
         self.checkPodCommandBtn.Bind(wx.EVT_BUTTON, self.OnCheckPodCommand)
 
-        self.importDataBtn = wx.Button(self, wx.ID_ANY, u"Import Data")
-        self.importDataBtn.Bind(wx.EVT_BUTTON, self.OnImportData)
-
-        self.exportDataBtn = wx.Button(self, wx.ID_ANY, u"Export Data")
-        self.exportDataBtn.Bind(wx.EVT_BUTTON, self.OnExportData)
-
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.checkSvnCommandBtn, 0, wx.LEFT|wx.TOP, 10)
         sizer.Add(hBox1, 0, wx.LEFT|wx.TOP, 10)
         sizer.Add(self.checkPodCommandBtn, 0, wx.LEFT|wx.TOP, 10)
         sizer.Add(hBox2, 0, wx.LEFT|wx.TOP, 10)
-        sizer.Add((0,30))
-        sizer.Add(self.importDataBtn, 0, wx.LEFT|wx.TOP, 10)
-        sizer.Add(self.exportDataBtn, 0, wx.LEFT|wx.TOP, 10)
 
         self.SetSizer(sizer)
         self.Fit()
@@ -73,10 +57,7 @@ class PTEnvironmentWindow (wx.Window):
         self.setSvnCommandBtn.Enable(False)
         self.setSvnCommandBtn.SetLabelText(u"Setting")
 
-        commandPath = PTCommandPath()
-        commandPath.name = "svn"
-        commandPath.commandPath = self.svnCommandText.GetValue()
-        PTCommandPathConfig().addCommand(commandPath)
+        PTCommandPathConfig().addCommand("svn", self.svnCommandText.GetValue())
 
         self.setSvnCommandBtn.Enable(True)
         self.setSvnCommandBtn.SetLabelText(u"Set `svn` command")
@@ -98,10 +79,7 @@ class PTEnvironmentWindow (wx.Window):
         self.setPodCommandBtn.Enable(False)
         self.setPodCommandBtn.SetLabelText(u"Setting")
 
-        commandPath = PTCommandPath()
-        commandPath.name = "pod"
-        commandPath.commandPath = self.podCommandText.GetValue()
-        PTCommandPathConfig().addCommand(commandPath)
+        PTCommandPathConfig().addCommand("pod", self.podCommandText.GetValue())
 
         self.setPodCommandBtn.Enable(True)
         self.setPodCommandBtn.SetLabelText(u"Set `pod` command")
@@ -117,30 +95,3 @@ class PTEnvironmentWindow (wx.Window):
             self.checkPodCommandBtn.SetLabelText(u"Check `pod` Command")
         else:
             self.checkPodCommandBtn.SetLabelText(u"Recheck")
-
-    # Import data
-    def OnImportData(self, event):
-        filesFilter = "Dicom (*.json)|*.json|"
-        fileDlg = wx.FileDialog(self, u"Choose Json File", os.path.expanduser('~'), wildcard=filesFilter, style=wx.FD_OPEN)
-        if fileDlg.ShowModal() == wx.ID_OK:
-            self.importDataBtn.Enable(False)
-            self.importDataBtn.SetLabelText(u"Importing")
-            PTDBManager().importData(fileDlg.GetPath(), self.OnImportDataCallback)
-
-    def OnImportDataCallback(self, result):
-        self.importDataBtn.Enable(True)
-        self.importDataBtn.SetLabelText(u"Import Data")
-        self.importCallback()
-
-    # Export data
-    def OnExportData(self, event):
-        filesFilter = "Dicom (*.json)|*.json|"
-        fileDlg = wx.FileDialog(self, u"Save Json File", os.path.expanduser('~'), wildcard=filesFilter, style=wx.FD_SAVE)
-        if fileDlg.ShowModal() == wx.ID_OK:
-            self.exportDataBtn.Enable(False)
-            self.exportDataBtn.SetLabelText(u"Exporting")
-            PTDBManager().exportData(fileDlg.GetPath(), self.OnExportDataCallback)
-
-    def OnExportDataCallback(self, result):
-        self.exportDataBtn.Enable(True)
-        self.exportDataBtn.SetLabelText(u"Export Data")

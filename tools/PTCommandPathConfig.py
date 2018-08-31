@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-from PTDBManager import PTDBManager
-
+import PTOSPath
+import json
 
 class PTCommandPathConfig:
     __instance = None
-    commandPathData = None
+    configDict = None
 
     def __init__(self):
         pass
@@ -16,19 +16,27 @@ class PTCommandPathConfig:
         return cls.__instance
 
     def GetCommands(self):
-        if self.commandPathData == None:
-            self.commandPathData = PTDBManager().getCommandPathDict()
-        return self.commandPathData
+        if self.configDict == None:
+            f = open(PTOSPath.getConfigPath(), "r")
+            jsonStr = f.read()
+            f.close()
+            self.configDict = json.loads(jsonStr)
+        return self.configDict
 
     def command(self, name):
         return self.GetCommands().get(name, self.defaultCommand(name))
 
-    def addCommand(self, commandPath):
-        if commandPath.commandPath == None or len(commandPath.commandPath) == 0:
-            commandPath.commandPath = self.defaultCommand(commandPath.name)
-        result = PTDBManager().addCommandPath(commandPath)
-        if result == True:
-            self.GetCommands()[commandPath.name] = commandPath.commandPath
+    def addCommand(self, name, path):
+        self.GetCommands()
+        commandPath = path
+        if commandPath == None:
+            commandPath = self.defaultCommand(name)
+        self.GetCommands()[name] = commandPath
+        jsonStr = json.dumps(self.GetCommands())
+
+        f = open(PTOSPath.getConfigPath(), "w")
+        f.write(jsonStr)
+        f.close()
 
     def defaultCommand(self, name):
         command = ""

@@ -11,7 +11,7 @@ class PTLoggerWindow (wx.Window):
         self.SetupUI()
 
     def SetupUI(self):
-        self.clearBtn = wx.Button(self, wx.ID_ANY, u"Clear log")
+        self.clearBtn = wx.Button(self, wx.ID_ANY, u"Clear")
         self.clearBtn.Bind(wx.EVT_BUTTON, self.OnClearLog)
         self.logArea = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT|wx.TE_MULTILINE|wx.TE_READONLY)
 
