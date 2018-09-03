@@ -2,7 +2,9 @@
 import commands
 import thread
 import wx
+import re
 import os
+import sqlite3
 from PTDBManager import PTDBManager
 from PTCommandPathConfig import PTCommandPathConfig
 
@@ -73,15 +75,67 @@ class PTCommand:
             wx.CallAfter(logCallback, "push %s's podspec to repo failed!!!\n" % module.name)
             wx.CallAfter(completeCallback, False, module)
 
-    def addSpecRepo(self, specRepo, logCallback, completeCallback):
-        thread.start_new_thread(self.addSpecRepoWithShell, (specRepo, logCallback, completeCallback))
+    # Pod manager
+    def getSpecRepoList(self, logCallback, completeCallback):
+        thread.start_new_thread(self.getSpecRepoListWithShell, (logCallback, completeCallback))
 
-    def addSpecRepoWithShell(self, specRepo, logCallback, completeCallback):
-        addSpecRepo = "%s repo-svn add %s %s" % (PTCommandPathConfig().command("pod"), specRepo.name, specRepo.remotePath)
+    def getSpecRepoListWithShell(self, logCallback, completeCallback):
+        testPod = "cd $HOME; %s repo list" % PTCommandPathConfig().command("pod")
+        self.logCommand(testPod, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(testPod)
+        self.logOutput(copyRet, copyOutput, logCallback)
+
+        specRepoList = []
+        typeStr = None
+        for line in copyOutput.split('\n'):
+            match = re.match(r'.*Type: (.*)', line, re.M | re.I)
+            if match:
+                str = match.group(1)
+                wx.CallAfter(logCallback, "\nGet spec repo type -- type %s\n" % str)
+                if str == "local":
+                    typeStr = str
+            if typeStr != None:
+                match = re.match(r'.*Path: (.*)', line, re.M | re.I)
+                if match:
+                    localPath = match.group(1)
+                    wx.CallAfter(logCallback, "\nGet spec repo local path -- path %s\n" % localPath)
+
+                    dbPath = os.path.join(localPath, ".svn", "wc.db")
+                    if os.path.exists(dbPath):
+                        conn = sqlite3.connect(dbPath)
+                        cursor = conn.cursor()
+                        cursor.execute("select * from REPOSITORY;")
+                        result = cursor.fetchone()
+                        if result != None:
+                            remoteRoot = result[1]
+                            name = os.path.basename(localPath)
+                            remotePath = "%s/%s" % (remoteRoot, name)
+                            wx.CallAfter(logCallback, "\nGet spec repo remote path -- path %s\n" % remotePath)
+                            specRepoList.append((name, remotePath))
+                        cursor.close()
+                        conn.close()
+                    typeStr = None
+        wx.CallAfter(completeCallback, specRepoList)
+
+    def addSpecRepo(self, name, remotePath, logCallback, completeCallback):
+        thread.start_new_thread(self.addSpecRepoWithShell, (name, remotePath, logCallback, completeCallback))
+
+    def addSpecRepoWithShell(self, name, remotePath, logCallback, completeCallback):
+        addSpecRepo = "%s repo-svn add %s %s" % (PTCommandPathConfig().command("pod"), name, remotePath)
         self.logCommand(addSpecRepo, logCallback)
         copyRet, copyOutput = commands.getstatusoutput(addSpecRepo)
         self.logOutput(copyRet, copyOutput, logCallback)
-        wx.CallAfter(completeCallback, specRepo)
+        wx.CallAfter(completeCallback, name, remotePath)
+
+    def removeSpecRepo(self, name, logCallback, completeCallback):
+        thread.start_new_thread(self.removeSpecRepoWithShell, (name, logCallback, completeCallback))
+
+    def removeSpecRepoWithShell(self, name, logCallback, completeCallback):
+        addSpecRepo = "%s repo remove %s" % (PTCommandPathConfig().command("pod"), name)
+        self.logCommand(addSpecRepo, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(addSpecRepo)
+        self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(completeCallback, name)
 
     # Check pod command
     def checkPodCommand(self, logCallback, completeCallback):

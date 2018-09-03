@@ -123,14 +123,11 @@ class PTFrame (wx.Frame):
 
     # Add spec repo callback
     def OnAddSpecRepoCallback(self):
-        self.addSpecRepoFrame = PTAddSpecRepoFrame(self, self.OnAddSpecRepoCompleteCallback)
+        self.addSpecRepoFrame = PTAddSpecRepoFrame(self, self.OnLogCallback, self.OnAddSpecRepoCompleteCallback)
 
-    def OnAddSpecRepoCompleteCallback(self, specRepo):
-        PTCommand().addSpecRepo(specRepo, self.OnLogCallback, self.OnAddSpecRepoToPodCallback)
-
-    def OnAddSpecRepoToPodCallback(self, specRepo):
+    def OnAddSpecRepoCompleteCallback(self, name, remotePath):
         self.addSpecRepoFrame.Destroy()
-        self.specRepoWindow.addSpecRepo(specRepo)
+        self.specRepoWindow.addSpecRepo(name, remotePath)
 
     # Add module callback
     def OnAddModuleCallback(self):

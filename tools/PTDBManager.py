@@ -3,8 +3,6 @@ import os
 import sqlite3
 import PTOSPath
 from models.PTModule import PTModule
-from models.PTSpecRepo import PTSpecRepo
-from models.PTCodeRepo import PTCodeRepo
 from models.PTModuleBranch import PTModuleBranch
 
 class PTDBManager:
@@ -30,8 +28,6 @@ class PTDBManager:
 
             if existVersion == False:
                 self.createModuleTable()
-                self.createSpecTable()
-                self.createCodeTable()
                 self.createModuleBranchesTable()
                 self.dbConnect.commit()
 
@@ -43,25 +39,6 @@ class PTDBManager:
           "local_path" TEXT NOT NULL DEFAULT '',
           "code_repo_id" INTEGER NOT NULL DEFAULT 0,
           "spec_repo_id" INTEGER NOT NULL DEFAULT 0
-        );""")
-
-    # Add spec repo table
-    def createSpecTable(self):
-        self.dbCursor.execute("""CREATE TABLE IF NOT EXISTS "pt_spec_repo" (
-          "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          "name" TEXT NOT NULL DEFAULT '',
-          "remote_path" TEXT NOT NULL DEFAULT ''
-        );""")
-
-    # Add code repo table
-    def createCodeTable(self):
-        self.dbCursor.execute("""CREATE TABLE IF NOT EXISTS "pt_code_repo" (
-          "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          "name" TEXT NOT NULL DEFAULT '',
-          "remote_path" TEXT NOT NULL DEFAULT '',
-          "username" TEXT NOT NULL DEFAULT '',
-          "password" TEXT NOT NULL DEFAULT '',
-          "type" INTEGER NOT NULL DEFAULT 0
         );""")
 
     # Add module branches table
@@ -110,106 +87,6 @@ class PTDBManager:
         self.openDB()
         self.deleteModuleBranches(module.id)
         self.dbCursor.execute("delete from pt_module where id = %d;" % module.id)
-        self.dbConnect.commit()
-        return True
-
-    # Spec repo methods
-    def getSpecRepo(self, specRepoId):
-        self.openDB()
-        self.dbCursor.execute("select * from pt_spec_repo where id = %d;" % specRepoId)
-        result = self.dbCursor.fetchone()
-        if result != None:
-            specRepo = PTSpecRepo()
-            specRepo.id = specRepoId
-            specRepo.name = result[1]
-            specRepo.remotePath = result[2]
-            return specRepo
-        return None
-
-    def getSpecRepoList(self):
-        self.openDB()
-        self.dbCursor.execute("select * from pt_spec_repo;")
-        results = self.dbCursor.fetchall()
-
-        specRepoList = []
-        for row in results:
-            specRepo = PTSpecRepo()
-            specRepo.id = row[0]
-            specRepo.name = row[1]
-            specRepo.remotePath = row[2]
-            specRepoList.append(specRepo)
-        return specRepoList
-
-    def addNewSpecRepo(self, specRepo, callback):
-        self.openDB()
-        self.dbCursor.execute("""insert into "pt_spec_repo"(
-        "name",
-        "remote_path"
-        ) values ("%s","%s");""" % (specRepo.name,
-                                    specRepo.remotePath))
-        specRepo.id = self.dbCursor.lastrowid
-        self.dbConnect.commit()
-        callback(specRepo)
-
-    def deleteSpecRepo(self, specRepo):
-        self.openDB()
-        self.dbCursor.execute("delete from pt_spec_repo where id = %d;" % specRepo.id)
-        self.dbConnect.commit()
-        return True
-
-    # Code repo methods
-    def getCodeRepo(self, codeRepoId):
-        self.openDB()
-        self.dbCursor.execute("select * from pt_code_repo where id = %d;" % codeRepoId)
-        result = self.dbCursor.fetchone()
-        if result != None:
-            codeRepo = PTCodeRepo()
-            codeRepo.id = codeRepoId
-            codeRepo.name = result[1]
-            codeRepo.remotePath = result[2]
-            codeRepo.username = result[3]
-            codeRepo.password = result[4]
-            codeRepo.type = result[5]
-            return codeRepo
-        return None
-
-    def getCodeRepoList(self):
-        self.openDB()
-        self.dbCursor.execute("select * from pt_code_repo;")
-        results = self.dbCursor.fetchall()
-
-        codeRepoList = []
-        for row in results:
-            codeRepo = PTCodeRepo()
-            codeRepo.id = row[0]
-            codeRepo.name = row[1]
-            codeRepo.remotePath = row[2]
-            codeRepo.username = row[3]
-            codeRepo.password = row[4]
-            codeRepo.type = row[5]
-            codeRepoList.append(codeRepo)
-        return codeRepoList
-
-    def addNewCodeRepo(self, codeRepo, callback):
-        self.openDB()
-        self.dbCursor.execute("""insert into "pt_code_repo"(
-        "name",
-        "remote_path",
-        "username",
-        "password",
-        "type"
-        ) values ("%s","%s","%s","%s","%s");""" % (codeRepo.name,
-                                                   codeRepo.remotePath,
-                                                   codeRepo.username,
-                                                   codeRepo.password,
-                                                   codeRepo.type))
-        codeRepo.id = self.dbCursor.lastrowid
-        self.dbConnect.commit()
-        callback(codeRepo)
-
-    def deleteCodeRepo(self, codeRepo):
-        self.openDB()
-        self.dbCursor.execute("delete from pt_code_repo where id = %d;" % codeRepo.id)
         self.dbConnect.commit()
         return True
 

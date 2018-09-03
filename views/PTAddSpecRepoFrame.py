@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import wx
-from tools.PTDBManager import PTDBManager
-from models.PTSpecRepo import PTSpecRepo
+from tools.PTCommand import PTCommand
 
 class PTAddSpecRepoFrame (wx.Frame):
     specRepoNameTextTip = None
@@ -9,11 +8,13 @@ class PTAddSpecRepoFrame (wx.Frame):
     specRepoPathTextTip = None
     specRepoPathText = None
 
+    logCallback = None
     callback = None
 
-    def __init__(self, parent, callback):
+    def __init__(self, parent, logCallback, callback):
         super(PTAddSpecRepoFrame, self).__init__(parent, wx.ID_ANY, u"Add Pod Spec Repo", size=(600,200))
 
+        self.logCallback = logCallback
         self.callback = callback
 
         gridSizer = wx.FlexGridSizer(2, 2, 10, 10)
@@ -46,14 +47,9 @@ class PTAddSpecRepoFrame (wx.Frame):
         self.Show(True)
 
     def OnAddSpecRepo(self, event):
-        specRepo = PTSpecRepo()
-        specRepo.name = self.specRepoNameText.GetValue()
-        specRepo.remotePath = self.specRepoPathText.GetValue()
-        if len(specRepo.name) > 0 and len(specRepo.remotePath) > 0:
-            self.addBtn.Enable(False)
-            PTDBManager().addNewSpecRepo(specRepo, self.AddSpecRepoCallback)
+        name = self.specRepoNameText.GetValue()
+        remotePath = self.specRepoPathText.GetValue()
+        if len(name) > 0 and len(remotePath) > 0:
+            PTCommand().addSpecRepo(name, remotePath, self.logCallback, self.callback)
         else:
             wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)
-
-    def AddSpecRepoCallback(self, specRepo):
-        self.callback(specRepo)

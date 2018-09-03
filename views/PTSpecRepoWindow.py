@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import wx
 import wx.grid
-from tools.PTDBManager import PTDBManager
+from tools.PTCommand import PTCommand
 
 class PTSpecRepoWindow (wx.Window):
     specRepoTable = None
@@ -9,7 +9,7 @@ class PTSpecRepoWindow (wx.Window):
     addSpecRepoBtn = None
     deleteSpecRepoBtn = None
 
-    specRepoData = None
+    specRepoData = []
 
     logCallback = None
     addSpecRepoCallback = None
@@ -17,30 +17,30 @@ class PTSpecRepoWindow (wx.Window):
     def __init__(self, parent, logCallback, addSpecRepoCallback):
         super(PTSpecRepoWindow, self).__init__(parent)
 
-        self.specRepoData = PTDBManager().getSpecRepoList()
         self.logCallback = logCallback
         self.addSpecRepoCallback = addSpecRepoCallback
         self.SetupUI()
+        PTCommand().getSpecRepoList(self.logCallback, self.OnGetSpecRepoListCompleteCallback)
 
-    def SetupUI(self):
-        # Table
-        self.specRepoTable = wx.grid.Grid(self, wx.ID_ANY)
-        self.specRepoTable.CreateGrid(0, 3, 1)
-        self.specRepoTable.SetAutoLayout(1)
-
-        self.specRepoTable.SetColLabelValue(0, u"ID")
-        self.specRepoTable.SetColSize(0, 60)
-
-        self.specRepoTable.SetColLabelValue(1, u"Name")
-        self.specRepoTable.SetColSize(1, 200)
-
-        self.specRepoTable.SetColLabelValue(2, u"Remote path")
-        self.specRepoTable.SetColSize(2, 400)
+    def OnGetSpecRepoListCompleteCallback(self, specRepoList):
+        self.specRepoData = specRepoList
 
         row = 0
         for specRepo in self.specRepoData:
             self.AppendSpecRepo(row, specRepo)
             row+=1
+
+    def SetupUI(self):
+        # Table
+        self.specRepoTable = wx.grid.Grid(self, wx.ID_ANY)
+        self.specRepoTable.CreateGrid(0, 2, 1)
+        self.specRepoTable.SetAutoLayout(1)
+
+        self.specRepoTable.SetColLabelValue(0, u"Name")
+        self.specRepoTable.SetColSize(0, 200)
+
+        self.specRepoTable.SetColLabelValue(1, u"Remote path")
+        self.specRepoTable.SetColSize(1, 400)
 
         self.specRepoTable.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnCellLeftClick)
         self.specRepoTable.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.OnLabelLeftClick)
@@ -71,17 +71,13 @@ class PTSpecRepoWindow (wx.Window):
         self.specRepoTable.SetRowLabelValue(row, "%d" % (row + 1))
         self.specRepoTable.SetRowSize(row, 30)
 
-        self.specRepoTable.SetCellValue(row, 0, "%d" % specRepo.id)
+        self.specRepoTable.SetCellValue(row, 0, specRepo[0])
         self.specRepoTable.SetReadOnly(row, 0)
         self.specRepoTable.SetCellAlignment(row, 0, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
-        self.specRepoTable.SetCellValue(row, 1, specRepo.name)
+        self.specRepoTable.SetCellValue(row, 1, specRepo[1])
         self.specRepoTable.SetReadOnly(row, 1)
         self.specRepoTable.SetCellAlignment(row, 1, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
-
-        self.specRepoTable.SetCellValue(row, 2, specRepo.remotePath)
-        self.specRepoTable.SetReadOnly(row, 2)
-        self.specRepoTable.SetCellAlignment(row, 2, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
 
     def ClearSelection(self):
         self.specRepoTable.ClearSelection()
@@ -93,8 +89,12 @@ class PTSpecRepoWindow (wx.Window):
     def OnDeleteSpecRepo(self, event):
         row = self.specRepoTable.SelectedRows[0]
         specRepo = self.specRepoData[row]
+        PTCommand().removeSpecRepo(specRepo[0], self.logCallback, self.OnDeleteSpecRepoCompleteCallback)
 
-        PTDBManager().deleteSpecRepo(specRepo)
+    def OnDeleteSpecRepoCompleteCallback(self, name):
+        row = self.specRepoTable.SelectedRows[0]
+        specRepo = self.specRepoData[row]
+
         self.specRepoData.remove(specRepo)
         self.specRepoTable.DeleteRows(row)
         self.ClearSelection()
@@ -110,7 +110,7 @@ class PTSpecRepoWindow (wx.Window):
     def OnLabelLeftClick(self, event):
         pass
 
-    def addSpecRepo(self, specRepo):
+    def addSpecRepo(self, name, remotePath):
         self.ClearSelection()
-        self.specRepoData.append(specRepo)
-        self.AppendSpecRepo(len(self.specRepoData)-1, specRepo)
+        self.specRepoData.append((name, remotePath))
+        self.AppendSpecRepo(len(self.specRepoData)-1, (name, remotePath))
