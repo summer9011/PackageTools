@@ -4,6 +4,7 @@ import wx.grid
 from tools import PTModuleHelper
 from tools.PTDBManager import PTDBManager
 from tools.PTCommand import PTCommand
+from PTFileDrop import PTFileDrop
 
 class PTModuleWindow (wx.Window):
     moduleTable = None
@@ -53,6 +54,8 @@ class PTModuleWindow (wx.Window):
 
         self.moduleTable.SetColLabelValue(5, u"Remote version")
         self.moduleTable.SetColSize(5, 120)
+
+        self.moduleTable.SetDropTarget(PTFileDrop())
 
         row = 0
         for module in self.moduleData:

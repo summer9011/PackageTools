@@ -5,13 +5,10 @@ import wx.aui
 from tools.PTCommand import PTCommand
 
 from views.PTEnvironmentWindow import PTEnvironmentWindow
-from views.PTCodeRepoWindow import PTCodeRepoWindow
 from views.PTSpecRepoWindow import PTSpecRepoWindow
 from views.PTModuleWindow import PTModuleWindow
 from views.PTLoggerWindow import PTLoggerWindow
 
-from views.PTAddModuleFrame import PTAddModuleFrame
-from views.PTAddCodeRepoFrame import PTAddCodeRepoFrame
 from views.PTAddSpecRepoFrame import PTAddSpecRepoFrame
 from views.PTBranchesFrame import PTBranchesFrame
 
@@ -19,14 +16,11 @@ class PTFrame (wx.Frame):
     mgr = None
 
     environmentWindow = None
-    codeRepoWindow = None
     specRepoWindow = None
     moduleWindow = None
     loggerWindow = None
 
-    addCodeRepoFrame = None
     addSpecRepoFrame = None
-    addModuleFrame = None
     branchesFrame = None
 
     loggerBtn = None
@@ -56,8 +50,6 @@ class PTFrame (wx.Frame):
         topNotebook.AddPage(self.moduleWindow, u"Module List")
         self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
         topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
-        self.codeRepoWindow = PTCodeRepoWindow(topNotebook, self.OnLogCallback, self.OnAddCodeRepoCallback)
-        topNotebook.AddPage(self.codeRepoWindow, u"Code Repo List")
         self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback)
         topNotebook.AddPage(self.environmentWindow, u"Environment")
         topNotebook.SetSelection(0)
@@ -113,14 +105,6 @@ class PTFrame (wx.Frame):
         vBox.Add(self.CreateBottomWindow(panel), 0, wx.EXPAND)
         panel.SetSizerAndFit(vBox)
 
-    # Add code repo callback
-    def OnAddCodeRepoCallback(self):
-        self.addCodeRepoFrame = PTAddCodeRepoFrame(self, self.OnAddCodeRepoCompleteCallback)
-
-    def OnAddCodeRepoCompleteCallback(self, codeRepo):
-        self.addCodeRepoFrame.Destroy()
-        self.codeRepoWindow.addCodeRepo(codeRepo)
-
     # Add spec repo callback
     def OnAddSpecRepoCallback(self):
         self.addSpecRepoFrame = PTAddSpecRepoFrame(self, self.OnLogCallback, self.OnAddSpecRepoCompleteCallback)
@@ -131,11 +115,10 @@ class PTFrame (wx.Frame):
 
     # Add module callback
     def OnAddModuleCallback(self):
-        self.addModuleFrame = PTAddModuleFrame(self, self.OnAddModuleCompleteCallback, self.codeRepoWindow.codeRepoData, self.specRepoWindow.specRepoData)
+        print ""
 
     def OnAddModuleCompleteCallback(self, moduleList):
-        self.addModuleFrame.Destroy()
-        self.moduleWindow.addModule(moduleList[0])
+        print ""
 
     def OnBranchesCallback(self, module):
         self.branchesFrame = PTBranchesFrame(self, self.OnLogCallback, self.OnBranchesPublishCompleteCallback, module)
