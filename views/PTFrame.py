@@ -10,7 +10,6 @@ from views.PTModuleWindow import PTModuleWindow
 from views.PTLoggerWindow import PTLoggerWindow
 
 from views.PTAddSpecRepoFrame import PTAddSpecRepoFrame
-from views.PTBranchesFrame import PTBranchesFrame
 
 class PTFrame (wx.Frame):
     mgr = None
@@ -21,7 +20,6 @@ class PTFrame (wx.Frame):
     loggerWindow = None
 
     addSpecRepoFrame = None
-    branchesFrame = None
 
     loggerBtn = None
 
@@ -46,7 +44,7 @@ class PTFrame (wx.Frame):
         panel = wx.Panel(contentWindow)
 
         topNotebook = wx.Notebook(panel, wx.ID_ANY)
-        self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback, self.OnAddModuleCallback, self.OnBranchesCallback)
+        self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback)
         topNotebook.AddPage(self.moduleWindow, u"Module List")
         self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
         topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
@@ -112,19 +110,6 @@ class PTFrame (wx.Frame):
     def OnAddSpecRepoCompleteCallback(self, name, remotePath):
         self.addSpecRepoFrame.Destroy()
         self.specRepoWindow.addSpecRepo(name, remotePath)
-
-    # Add module callback
-    def OnAddModuleCallback(self):
-        print ""
-
-    def OnAddModuleCompleteCallback(self, moduleList):
-        print ""
-
-    def OnBranchesCallback(self, module):
-        self.branchesFrame = PTBranchesFrame(self, self.OnLogCallback, self.OnBranchesPublishCompleteCallback, module)
-
-    def OnBranchesPublishCompleteCallback(self, result, module):
-        self.moduleWindow.OnPublishModuleCompleteCallback(result, module)
 
     # Log callback
     def OnLogCallback(self, message):

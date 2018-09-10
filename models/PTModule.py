@@ -1,11 +1,19 @@
 #!/usr/bin/env python
 
+class PTModuleRepo:
+    id = 0
+    url = ""
+    user = ""
+    pwd = ""
+
 class PTModule:
-    id = None
-    name = None
-    localPath = None
-    codeRepoId = 0
-    specRepoId = 0
+    id = 0
+    name = ""
+    path = ""
+    sepcName = ""
+    trunkId = 0
+
+    repo = None
 
     localVersion = ""
     remoteVersion = ""

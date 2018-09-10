@@ -6,7 +6,6 @@ import urllib2
 import time
 import wx
 from PTDBManager import PTDBManager
-from models.PTModuleBranch import PTRemoteModuleBranch
 
 def asyncModuleVersions(moduleList, logCallback, resultCallback):
     thread.start_new_thread(getVersion, (moduleList, logCallback, resultCallback))
