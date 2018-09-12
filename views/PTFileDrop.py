@@ -2,9 +2,14 @@
 import wx
 
 class PTFileDrop(wx.FileDropTarget):
-    def __init__(self):
+    callback = None
+
+    def __init__(self, callback):
         super(PTFileDrop, self).__init__()
+        self.callback = callback
 
     def OnDropFiles(self, x, y, filenames):
-        print filenames
-        # wx.LogMessage(filenames[0])
+        if len(filenames):
+            self.callback(filenames[0])
+            return True
+        return False
