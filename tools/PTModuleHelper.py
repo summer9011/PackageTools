@@ -3,9 +3,82 @@ import thread
 import os
 import re
 import urllib2
+import urlparse
 import time
 import wx
+import sqlite3
 from PTDBManager import PTDBManager
+
+def FindModuleInfo(modulePath, logCallback, resultCallback):
+    thread.start_new_thread(FindModuleInThread, (modulePath, logCallback, resultCallback))
+
+def FindModuleInThread(modulePath, logCallback, resultCallback):
+    fileName = None
+    list = os.listdir(modulePath)
+    for name in list:
+        if name.endswith(".podspec"):
+            fileName = name
+            break
+
+    name = None
+    path = modulePath
+    version = None
+    url = None
+    user = None
+    if fileName != None:
+        filePath = os.path.join(modulePath, fileName)
+        f = open(filePath)
+        line = f.readline()
+        while line:
+            if name != None and version != None and url != None:
+                break
+            else:
+                #match name
+                nameMatch = re.match(r'.*s.name.*=.*\'(.*)\'', line, re.M | re.I)
+                if nameMatch:
+                    name = nameMatch.group(1)
+                    wx.CallAfter(logCallback, "\nGet module -- find name %s\n" % name)
+                    line = f.readline()
+                    continue
+
+                #match version
+                versionMatch = re.match(r'.*s.version.*=.*\'(.*)\'', line, re.M | re.I)
+                if versionMatch:
+                    version = versionMatch.group(1)
+                    wx.CallAfter(logCallback, "\nGet module -- find version %s\n" % version)
+                    line = f.readline()
+                    continue
+
+                #match url
+                urlMatch = re.match(r'.*s.source.*=.*\'(.*)\'', line, re.M | re.I)
+                if urlMatch:
+                    url = urlMatch.group(1)
+                    wx.CallAfter(logCallback, "\nGet module -- find url %s\n" % url)
+                    line = f.readline()
+                    continue
+            line = f.readline()
+        f.close()
+
+        #find url user
+        svnDBPath = os.path.join(modulePath, ".svn", "wc.db")
+        existSvnDB = os.path.exists(svnDBPath)
+        if existSvnDB:
+            dbConnect = sqlite3.connect(svnDBPath)
+            dbCursor = dbConnect.cursor()
+            dbCursor.execute("select * from main.REPOSITORY")
+            result = dbCursor.fetchone()
+            if result != None:
+                urls = urlparse.urlparse(result[1])
+                if len(urls[1]) > 0:
+                    names = urls[1].split('@')
+                    if len(names) == 2:
+                        user = names[0]
+            dbCursor.close()
+            dbConnect.close()
+
+    else:
+        wx.CallAfter(logCallback, "\nGet module -- Can't find podspec.\n")
+    wx.CallAfter(resultCallback, name, path, version, url, user)
 
 def asyncModuleVersions(moduleList, logCallback, resultCallback):
     thread.start_new_thread(getVersion, (moduleList, logCallback, resultCallback))

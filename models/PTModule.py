@@ -6,6 +6,12 @@ class PTModuleRepo:
     user = ""
     pwd = ""
 
+    def __init__(self):
+        self.id = 0
+        self.url = ""
+        self.user = ""
+        self.pwd = ""
+
 class PTModule:
     id = 0
     name = ""
@@ -19,6 +25,20 @@ class PTModule:
     remoteVersion = ""
 
     isPublishing = False
+
+    def __init__(self):
+        self.id = 0
+        self.name = ""
+        self.path = ""
+        self.sepcName = ""
+        self.trunkId = 0
+
+        self.repo = None
+
+        self.localVersion = ""
+        self.remoteVersion = ""
+
+        self.isPublishing = False
 
     @classmethod
     def checkVersionBigger(cls, str1, str2):

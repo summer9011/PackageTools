@@ -96,3 +96,10 @@ class PTDBManager:
         self.dbCursor.execute("delete from pt_module where id = %d;" % module.id)
         self.dbConnect.commit()
         return True
+
+    # Module repo methods
+    def findModuleRepo(self, url):
+        self.openDB()
+        self.dbCursor.execute("select * from pt_module_repo where url = \"%s\";" % url)
+        result = self.dbCursor.fetchone()
+        if result:
