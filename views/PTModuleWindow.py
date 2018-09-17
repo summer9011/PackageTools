@@ -10,6 +10,7 @@ from models.PTModuleViewModel import PTModuleViewModel
 from models.PTModuleViewModel import PTModuleTree
 from models.PTModule import PTModule
 from models.PTModule import PTModuleRepo
+from PTRepoDialog import PTRepoDialog
 
 class PTModuleWindow (wx.Window):
     dropBox = None
@@ -135,7 +136,10 @@ class PTModuleWindow (wx.Window):
             m.path = path
             m.localVersion = version
 
-            repo = PTModuleRepo()
+
+
+            dlg = PTRepoDialog(self, m, url, user, self.OnAddModuleCallback)
+            dlg.ShowWindowModal()
 
             # id = 0
             # sepcName = ""
@@ -143,3 +147,5 @@ class PTModuleWindow (wx.Window):
             # repo = None
             # remoteVersion = ""
 
+    def OnAddModuleCallback(self, module, isTrunk):
+        print module

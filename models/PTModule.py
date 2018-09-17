@@ -12,6 +12,15 @@ class PTModuleRepo:
         self.user = ""
         self.pwd = ""
 
+    def full(self, user):
+        if len(self.url) > 0 and len(self.user) and len(self.pwd):
+            if user != None:
+                if self.user == user:
+                    return True
+            else:
+                return True
+        return False
+
 class PTModule:
     id = 0
     name = ""

@@ -102,4 +102,23 @@ class PTDBManager:
         self.openDB()
         self.dbCursor.execute("select * from pt_module_repo where url = \"%s\";" % url)
         result = self.dbCursor.fetchone()
-        if result:
+        repo = PTModuleRepo()
+        repo.url = url
+        if result != None:
+            repo.id = result[0]
+            repo.user = result[2]
+            repo.pwd = result[3]
+        return repo
+
+    def updateModuleRepo(self, repo):
+        self.openDB()
+        if repo.id > 0:
+            self.dbCursor.execute("update pt_module_repo set user=\"%s\", pwd=\"%s\" where id=%d;" % (repo.user, repo.pwd, repo.id))
+        else:
+            self.dbCursor.execute("""insert into pt_module_repo (
+            "url", 
+            "user", 
+            "pwd") values ("%s", "%s", "%s")""" % (repo.url, repo.user, repo.pwd))
+            repo.id = self.dbCursor.lastrowid
+        self.dbConnect.commit()
+        return True
