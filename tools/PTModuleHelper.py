@@ -20,7 +20,7 @@ def FindModuleInThread(modulePath, logCallback, resultCallback):
             fileName = name
             break
 
-    name = None
+    trunkName = None
     path = modulePath
     version = None
     url = None
@@ -30,14 +30,14 @@ def FindModuleInThread(modulePath, logCallback, resultCallback):
         f = open(filePath)
         line = f.readline()
         while line:
-            if name != None and version != None and url != None:
+            if trunkName != None and version != None and url != None:
                 break
             else:
                 #match name
                 nameMatch = re.match(r'.*s.name.*=.*\'(.*)\'', line, re.M | re.I)
                 if nameMatch:
-                    name = nameMatch.group(1)
-                    wx.CallAfter(logCallback, "\nGet module -- find name %s\n" % name)
+                    trunkName = nameMatch.group(1)
+                    wx.CallAfter(logCallback, "\nGet module -- find name %s\n" % trunkName)
                     line = f.readline()
                     continue
 
@@ -78,7 +78,7 @@ def FindModuleInThread(modulePath, logCallback, resultCallback):
 
     else:
         wx.CallAfter(logCallback, "\nGet module -- Can't find podspec.\n")
-    wx.CallAfter(resultCallback, name, path, version, url, user)
+    wx.CallAfter(resultCallback, trunkName, path, version, url, user)
 
 def asyncModuleVersions(moduleList, logCallback, resultCallback):
     thread.start_new_thread(getVersion, (moduleList, logCallback, resultCallback))

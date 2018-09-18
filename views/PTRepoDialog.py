@@ -14,7 +14,7 @@ class PTRepoDialog (wx.Dialog):
     callback = None
 
     def __init__(self, parent, module, url, user, callback):
-        height = 100
+        height = 130
         needUser = False
         needPwd = False
         repo = PTDBManager().findModuleRepo(url)
@@ -33,8 +33,8 @@ class PTRepoDialog (wx.Dialog):
 
         super(PTRepoDialog, self).__init__(parent, size=(500, height))
 
-        self.module.repo = repo
         self.module = module
+        self.module.repo = repo
         self.callback = callback
 
         box = wx.BoxSizer(wx.VERTICAL)
@@ -103,6 +103,7 @@ class PTRepoDialog (wx.Dialog):
         else:
             isTrunk = False
         self.callback(self.module, isTrunk)
+        self.EndModal(wx.ID_OK)
 
     def OnCancelAction(self, event):
         self.EndModal(wx.ID_OK)

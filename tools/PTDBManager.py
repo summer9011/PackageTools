@@ -46,6 +46,7 @@ class PTDBManager:
           "path" TEXT NOT NULL DEFAULT '',
           "repo_id" INTEGER NOT NULL DEFAULT 0,
           "trunk_id" INTEGER NOT NULL DEFAULT 0,
+          "trunk_name" TEXT NOT NULL DEFAULT '',
           "spec_name" TEXT NOT NULL DEFAULT ''
         );""")
 
@@ -62,33 +63,88 @@ class PTDBManager:
             module.name = row[1]
             module.path = row[2]
             module.trunkId = row[4]
-            module.sepcName = row[5]
+            module.trunkName = row[5]
+            module.sepcName = row[6]
 
             if row[3] > 0:
                 module.repo = PTModuleRepo()
-                module.repo.id = row[6]
-                module.repo.url = row[7]
-                module.repo.user = row[8]
-                module.repo.pwd = row[9]
+                module.repo.id = row[7]
+                module.repo.url = row[8]
+                module.repo.user = row[9]
+                module.repo.pwd = row[10]
             moduleList.append(module)
 
         return moduleList
 
-    def addNewModule(self, moduleList, callback):
+    def addNewTrunkModule(self, module):
         self.openDB()
-        for module in moduleList:
+
+        self.dbCursor.execute("select * from pt_module where name=\"%s\" and trunk_id = 0" % module.name)
+        trunkResult = self.dbCursor.fetchone()
+        if trunkResult != None:
+            self.dbCursor.execute("update pt_module set path=\"%s\", repo_id=%d where id=%d" % (module.path, module.repo.id, trunkResult[0]))
+            module.id = trunkResult[0]
+        else:
+            self.dbCursor.execute("select * from pt_module where trunk_name=\"%s\" and trunk_id > 0" % module.name)
+            branchResults = self.dbCursor.fetchall()
+
             self.dbCursor.execute("""insert into "pt_module"(
             "name",
-            "local_path",
-            "code_repo_id",
-            "spec_repo_id"
-            ) values ("%s","%s","%s","%s");""" % (module.name,
-                                                  module.localPath,
-                                                  module.codeRepoId,
-                                                  module.specRepoId))
+            "path",
+            "repo_id",
+            "trunk_id",
+            "trunk_name",
+            "spec_name"
+            ) values ("%s","%s",%d,%d,"%s","%s");""" % (module.name,
+                                                   module.path,
+                                                   module.repo.id,
+                                                   module.trunkId,
+                                                   module.trunkName,
+                                                   module.sepcName))
             module.id = self.dbCursor.lastrowid
+
+            if branchResults != None:
+                for branch in branchResults:
+                    self.dbCursor.execute("update pt_module set trunk_id=%d, trunk_name=\"%s\" where id=%d" % (module.id, module.name, branch[0]))
+
         self.dbConnect.commit()
-        callback(moduleList)
+
+    def addNewBranchModule(self, module):
+        self.openDB()
+        self.dbCursor.execute("select * from pt_module where name=\"%s\" and trunk_id = 0" % module.trunkName)
+        trunkResult = self.dbCursor.fetchone()
+        if trunkResult != None:
+            self.dbCursor.execute("""insert into "pt_module"(
+            "name",
+            "path",
+            "repo_id",
+            "trunk_id",
+            "trunk_name",
+            "spec_name"
+            ) values ("%s","%s",%d,%d,"%s","%s");""" % (module.name,
+                                                        module.path,
+                                                        module.repo.id,
+                                                        trunkResult[0],
+                                                        trunkResult[1],
+                                                        module.sepcName))
+            module.id = self.dbCursor.lastrowid
+        else:
+            self.dbCursor.execute("""insert into "pt_module"(
+            "name",
+            "path",
+            "repo_id",
+            "trunk_id",
+            "trunk_name",
+            "spec_name"
+            ) values ("%s","%s",%d,%d,"%s","%s");""" % (module.name,
+                                                        module.path,
+                                                        module.repo.id,
+                                                        "",
+                                                        "",
+                                                        module.sepcName))
+            module.id = self.dbCursor.lastrowid
+
+        self.dbConnect.commit()
 
     def deleteModule(self, module):
         self.openDB()

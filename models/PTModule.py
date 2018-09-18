@@ -27,6 +27,7 @@ class PTModule:
     path = ""
     sepcName = ""
     trunkId = 0
+    trunkName = ""
 
     repo = None
 
@@ -41,6 +42,7 @@ class PTModule:
         self.path = ""
         self.sepcName = ""
         self.trunkId = 0
+        self.trunkName = ""
 
         self.repo = None
 

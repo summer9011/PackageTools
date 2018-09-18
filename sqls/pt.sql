@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS "pt_module" (
   "path" TEXT NOT NULL DEFAULT '',
   "repo_id" INTEGER NOT NULL DEFAULT 0,
   "trunk_id" INTEGER NOT NULL DEFAULT 0,
+  "trunk_name" TEXT NOT NULL DEFAULT '',
   "spec_name" TEXT NOT NULL DEFAULT ''
 );
