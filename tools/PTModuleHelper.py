@@ -4,10 +4,35 @@ import os
 import re
 import urllib2
 import urlparse
-import time
 import wx
 import sqlite3
-from PTDBManager import PTDBManager
+
+def checkVersionBigger(str1, str2):
+    bigger = False
+
+    str1List = str1.split('.')
+    str2List = str2.split('.')
+
+    if len(str1List) > len(str2List):
+        f = len(str1List)
+    else:
+        f = len(str2List)
+    for i in range(f):
+        try:
+            if int(str1List[i]) > int(str2List[i]):
+                bigger = True
+                break
+            elif int(str1List[i]) == int(str2List[i]):
+                continue
+            else:
+                break
+        except IndexError as e:
+            if len(str1List) > len(str2List):
+                bigger = True
+                break
+            else:
+                break
+    return bigger
 
 def FindModuleInfo(modulePath, logCallback, resultCallback):
     thread.start_new_thread(FindModuleInThread, (modulePath, logCallback, resultCallback))
@@ -34,7 +59,7 @@ def FindModuleInThread(modulePath, logCallback, resultCallback):
                 break
             else:
                 #match name
-                nameMatch = re.match(r'.*s.name.*=.*\'(.*)\'', line, re.M | re.I)
+                nameMatch = re.match(r'.*s.name.*=.*[\'\"](.*)[\'\"]', line, re.M | re.I)
                 if nameMatch:
                     trunkName = nameMatch.group(1)
                     wx.CallAfter(logCallback, "\nGet module -- find name %s\n" % trunkName)
@@ -42,7 +67,7 @@ def FindModuleInThread(modulePath, logCallback, resultCallback):
                     continue
 
                 #match version
-                versionMatch = re.match(r'.*s.version.*=.*\'(.*)\'', line, re.M | re.I)
+                versionMatch = re.match(r'.*s.version.*=.*[\'\"](.*)[\'\"]', line, re.M | re.I)
                 if versionMatch:
                     version = versionMatch.group(1)
                     wx.CallAfter(logCallback, "\nGet module -- find version %s\n" % version)
@@ -50,7 +75,7 @@ def FindModuleInThread(modulePath, logCallback, resultCallback):
                     continue
 
                 #match url
-                urlMatch = re.match(r'.*s.source.*=.*\'(.*)\'', line, re.M | re.I)
+                urlMatch = re.match(r'.*s.source.*=.*[\'\"](.*)[\'\"]', line, re.M | re.I)
                 if urlMatch:
                     url = urlMatch.group(1)
                     wx.CallAfter(logCallback, "\nGet module -- find url %s\n" % url)
@@ -80,50 +105,42 @@ def FindModuleInThread(modulePath, logCallback, resultCallback):
         wx.CallAfter(logCallback, "\nGet module -- Can't find podspec.\n")
     wx.CallAfter(resultCallback, trunkName, path, version, url, user)
 
-def asyncModuleVersions(moduleList, logCallback, resultCallback):
-    thread.start_new_thread(getVersion, (moduleList, logCallback, resultCallback))
+def asyncModuleVersions(mTrees, logCallback, resultCallback):
+    thread.start_new_thread(getVersion, (mTrees, logCallback, resultCallback))
 
-def getVersion(moduleList, logCallback, resultCallback):
-    for module in moduleList:
-        local = getModuleLocalVersion(module, logCallback)
-        remote = getModuleTagsRemoteVersion(module, logCallback)
-        module.localVersion = local
-        module.remoteVersion = remote
-        resultCallback(module)
-
-def getModuleLocalVersion(module, logCallback):
-    return getLocalVersion(module.localPath, logCallback)
+def getVersion(mTrees, logCallback, resultCallback):
+    for mTree in mTrees:
+        mTree.val.remoteVersion = getModuleTagsRemoteVersion(mTree.val, logCallback)
+        resultCallback(mTree)
 
 def getModuleTagsRemoteVersion(module, logCallback):
     try:
-        remoteVersion = "0"
-        lastTimestamp = 0
-        res = getRemoteContent(module, "%s/tags")
-        if res != None:
-            tagPath = res[0]
-            ret = res[1]
-            wx.CallAfter(logCallback, "\nGet remote tags version -- url: %s\n" % tagPath)
+        remoteVersion = ""
+
+        tagURL = module.repo.url+"/"+module.trunkName+"/tags"
+        password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        password_mgr.add_password(None, tagURL, module.repo.user, module.repo.pwd)
+        handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+        opener = urllib2.build_opener(handler)
+        opener.open(tagURL)
+        urllib2.install_opener(opener)
+        ret = urllib2.urlopen(tagURL)
+
+        wx.CallAfter(logCallback, "\nGet remote tags version -- url: %s\n" % tagURL)
+        line = ret.readline()
+        while line:
+            match = re.match(r'.*<a.*>(.*)/</a>.*', line, re.M | re.I)
+            if match:
+                serverVersion = match.group(1)
+                if len(remoteVersion) == 0:
+                    remoteVersion = serverVersion
+                elif checkVersionBigger(serverVersion, remoteVersion):
+                    remoteVersion = serverVersion
             line = ret.readline()
-            while line:
-                match = re.match(r'.*<a.*>(.*)/</a>.*', line, re.M | re.I)
-                if match:
-                    serverVersion = match.group(1)
-                    onePath = "%s/%s" % (tagPath, serverVersion)
-                    tagRet = urllib2.urlopen(onePath)
-                    lastModifiedStr = tagRet.info().getheader('Last-Modified')
-                    tmpTime = time.strptime(lastModifiedStr, "%a, %d %b %Y %H:%M:%S %Z")
-                    tmpTimestamp = int(time.mktime(tmpTime))
 
-                    if tmpTimestamp > lastTimestamp:
-                        lastTimestamp = tmpTimestamp
-                        remoteVersion = serverVersion
+        wx.CallAfter(logCallback, "\nGet remote tags version -- version %s\n" % remoteVersion)
+        return remoteVersion
 
-                line = ret.readline()
-            wx.CallAfter(logCallback, "\nGet remote tags version -- version %s\n" % remoteVersion)
-            return remoteVersion
-        else:
-            wx.CallAfter(logCallback, "\nGet remote tags version -- Can't find module's code repo\n")
-            return ""
     except Exception as e:
         wx.CallAfter(logCallback, "\nGet remote tags version -- %s\n" % e)
         return ""

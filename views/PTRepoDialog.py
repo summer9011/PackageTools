@@ -94,8 +94,11 @@ class PTRepoDialog (wx.Dialog):
         self.SetSizer(box)
 
     def OnOKAction(self, event):
-        self.module.repo.user = self.userText.GetValue()
-        self.module.repo.pwd = self.pwdText.GetValue()
+        if self.userText != None:
+            self.module.repo.user = self.userText.GetValue()
+
+        if self.pwdText != None:
+            self.module.repo.pwd = self.pwdText.GetValue()
 
         PTDBManager().updateModuleRepo(self.module.repo)
         if self.trunkRadio.GetValue() == True:

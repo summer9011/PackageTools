@@ -4,33 +4,75 @@ import wx.aui
 
 from tools.PTCommand import PTCommand
 
-from views.PTEnvironmentWindow import PTEnvironmentWindow
-from views.PTSpecRepoWindow import PTSpecRepoWindow
 from views.PTModuleWindow import PTModuleWindow
 from views.PTLoggerWindow import PTLoggerWindow
 
-from views.PTAddSpecRepoFrame import PTAddSpecRepoFrame
+from views.PTSpecRepoFrame import PTSpecRepoFrame
+from views.PTEnvironmentFrame import PTEnvironmentFrame
 
 class PTFrame (wx.Frame):
     mgr = None
 
-    environmentWindow = None
-    specRepoWindow = None
     moduleWindow = None
     loggerWindow = None
-
-    addSpecRepoFrame = None
 
     loggerBtn = None
 
     def __init__(self):
         super(PTFrame, self).__init__(None, wx.ID_ANY, u"iOS Develop Tools", size=(800, 600))
+
+        self.SetupMenuBar()
         self.SetupUI()
         self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.CentreOnScreen()
         self.Show(True)
 
         self.OnDisplayLogger(None)
+
+    def SetupMenuBar(self):
+        fileMenu = wx.Menu()
+
+        specRepoItem = fileMenu.Append(-1, "&Podspec Repo List...\tCtrl-P",
+                "Show Podspec repo list")
+        fileMenu.AppendSeparator()
+        environmentItem = fileMenu.Append(-1, "&Commands...\tCtrl-E",
+                "Show Commands paths")
+
+        exitItem = fileMenu.Append(wx.ID_EXIT)
+
+        # Now a help menu for the about item
+        helpMenu = wx.Menu()
+        aboutItem = helpMenu.Append(wx.ID_ABOUT)
+
+        # Make the menu bar and add the two menus to it. The '&' defines
+        # that the next letter is the "mnemonic" for the menu item. On the
+        # platforms that support it those letters are underlined and can be
+        # triggered from the keyboard.
+        menuBar = wx.MenuBar()
+        menuBar.Append(fileMenu, "&Configs")
+        menuBar.Append(helpMenu, "&Help")
+
+        # Give the menu bar to the frame
+        self.SetMenuBar(menuBar)
+
+        self.Bind(wx.EVT_MENU, self.OnShowSpecRepoList,  specRepoItem)
+        self.Bind(wx.EVT_MENU, self.OnShowCommands,  environmentItem)
+        self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
+        self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
+
+    def OnShowSpecRepoList(self, event):
+        PTSpecRepoFrame(self, self.OnLogCallback)
+
+    def OnShowCommands(self, event):
+        PTEnvironmentFrame(self, self.OnLogCallback)
+
+    def OnExit(self, event):
+        self.Close(True)
+
+    def OnAbout(self, event):
+        wx.MessageBox("Nice to you.",
+                      "Develop Tools",
+                      wx.OK|wx.ICON_INFORMATION)
 
     def OnClose(self, event):
         self.mgr.UnInit()
@@ -46,10 +88,6 @@ class PTFrame (wx.Frame):
         topNotebook = wx.Notebook(panel, wx.ID_ANY)
         self.moduleWindow = PTModuleWindow(topNotebook, self.OnLogCallback)
         topNotebook.AddPage(self.moduleWindow, u"Module List")
-        self.specRepoWindow = PTSpecRepoWindow(topNotebook, self.OnLogCallback, self.OnAddSpecRepoCallback)
-        topNotebook.AddPage(self.specRepoWindow, u"Spec Repo List")
-        self.environmentWindow = PTEnvironmentWindow(topNotebook, self.OnLogCallback)
-        topNotebook.AddPage(self.environmentWindow, u"Environment")
         topNotebook.SetSelection(0)
 
         infoBox = wx.BoxSizer(wx.HORIZONTAL)
@@ -102,14 +140,6 @@ class PTFrame (wx.Frame):
         vBox.Add(self.CreateContentWindow(panel), 1, wx.EXPAND)
         vBox.Add(self.CreateBottomWindow(panel), 0, wx.EXPAND)
         panel.SetSizerAndFit(vBox)
-
-    # Add spec repo callback
-    def OnAddSpecRepoCallback(self):
-        self.addSpecRepoFrame = PTAddSpecRepoFrame(self, self.OnLogCallback, self.OnAddSpecRepoCompleteCallback)
-
-    def OnAddSpecRepoCompleteCallback(self, name, remotePath):
-        self.addSpecRepoFrame.Destroy()
-        self.specRepoWindow.addSpecRepo(name, remotePath)
 
     # Log callback
     def OnLogCallback(self, message):

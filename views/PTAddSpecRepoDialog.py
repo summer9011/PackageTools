@@ -2,7 +2,7 @@
 import wx
 from tools.PTCommand import PTCommand
 
-class PTAddSpecRepoFrame (wx.Frame):
+class PTAddSpecRepoDialog (wx.Dialog):
     specRepoNameTextTip = None
     specRepoNameText = None
     specRepoPathTextTip = None
@@ -12,7 +12,7 @@ class PTAddSpecRepoFrame (wx.Frame):
     callback = None
 
     def __init__(self, parent, logCallback, callback):
-        super(PTAddSpecRepoFrame, self).__init__(parent, wx.ID_ANY, u"Add Pod Spec Repo", size=(600,200))
+        super(PTAddSpecRepoDialog, self).__init__(parent, size=(500,200))
 
         self.logCallback = logCallback
         self.callback = callback
@@ -35,16 +35,22 @@ class PTAddSpecRepoFrame (wx.Frame):
 
         gridSizer.AddGrowableCol(1)
 
-        # Add btn
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(gridSizer, 1, wx.EXPAND|wx.ALL, 30)
+
         self.addBtn = wx.Button(self, wx.ID_ANY, u"Add")
         self.addBtn.Bind(wx.EVT_BUTTON, self.OnAddSpecRepo)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(gridSizer, 1, wx.EXPAND|wx.ALL, 30)
-        sizer.Add(self.addBtn, 0, wx.CENTER|wx.BOTTOM, 30)
+        cancelBtn = wx.Button(self, wx.ID_ANY, u"Cancel")
+        cancelBtn.Bind(wx.EVT_BUTTON, self.OnCancelAction)
+
+        b = wx.BoxSizer(wx.HORIZONTAL)
+        b.Add(cancelBtn)
+        b.Add((10,0))
+        b.Add(self.addBtn)
+        sizer.Add(b, 0, wx.ALIGN_RIGHT|wx.BOTTOM|wx.RIGHT, 30)
 
         self.SetSizer(sizer)
-        self.Show(True)
 
     def OnAddSpecRepo(self, event):
         name = self.specRepoNameText.GetValue()
@@ -53,3 +59,6 @@ class PTAddSpecRepoFrame (wx.Frame):
             PTCommand().addSpecRepo(name, remotePath, self.logCallback, self.callback)
         else:
             wx.MessageBox(u"Should fill all inputs.", u"Error", wx.OK | wx.ICON_INFORMATION)
+
+    def OnCancelAction(self, event):
+        self.EndModal(wx.ID_OK)

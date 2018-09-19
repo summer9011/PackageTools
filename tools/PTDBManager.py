@@ -4,6 +4,7 @@ import sqlite3
 import PTOSPath
 from models.PTModule import PTModule
 from models.PTModule import PTModuleRepo
+import PTModuleHelper
 
 class PTDBManager:
     __instance = None
@@ -51,7 +52,7 @@ class PTDBManager:
         );""")
 
     # Module methods
-    def getModuleList(self):
+    def getModuleList(self, logCallback):
         self.openDB()
         self.dbCursor.execute("select * from pt_module as a left outer join pt_module_repo as b on a.repo_id=b.id;")
         results = self.dbCursor.fetchall()
@@ -72,6 +73,8 @@ class PTDBManager:
                 module.repo.url = row[8]
                 module.repo.user = row[9]
                 module.repo.pwd = row[10]
+
+            module.localVersion = PTModuleHelper.getLocalVersion(module.path, logCallback)
             moduleList.append(module)
 
         return moduleList
@@ -128,6 +131,8 @@ class PTDBManager:
                                                         trunkResult[1],
                                                         module.sepcName))
             module.id = self.dbCursor.lastrowid
+            module.trunkId = trunkResult[0]
+            module.trunkName = trunkResult[1]
         else:
             self.dbCursor.execute("""insert into "pt_module"(
             "name",

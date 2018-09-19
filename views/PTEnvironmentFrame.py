@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import wx
-import os
 from tools.PTCommand import PTCommand
 from tools.PTCommandPathConfig import PTCommandPathConfig
 
-class PTEnvironmentWindow (wx.Window):
+class PTEnvironmentFrame (wx.Frame):
     svnCommandText = None
     setSvnCommandBtn = None
     checkSvnCommandBtn = None
@@ -16,9 +15,13 @@ class PTEnvironmentWindow (wx.Window):
     logCallback = None
 
     def __init__(self, parent, logCallback):
-        super(PTEnvironmentWindow, self).__init__(parent)
+        super(PTEnvironmentFrame, self).__init__(parent, wx.ID_ANY, u"Commands", size=(600, 400))
+
         self.logCallback = logCallback
+
         self.SetupUI()
+        self.CentreOnScreen()
+        self.Show(True)
 
     def SetupUI(self):
         self.svnCommandText = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT, size=(280, 22))
@@ -50,7 +53,6 @@ class PTEnvironmentWindow (wx.Window):
         sizer.Add(hBox2, 0, wx.LEFT|wx.TOP, 10)
 
         self.SetSizer(sizer)
-        self.Fit()
 
     # Check svn command
     def OnSetSvnCommand(self, event):

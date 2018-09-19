@@ -2,25 +2,29 @@
 import wx
 import wx.grid
 from tools.PTCommand import PTCommand
+from views.PTAddSpecRepoDialog import PTAddSpecRepoDialog
 
-class PTSpecRepoWindow (wx.Window):
+class PTSpecRepoFrame (wx.Frame):
     specRepoTable = None
 
     addSpecRepoBtn = None
     deleteSpecRepoBtn = None
 
+    addSpecDialog = None
+
     specRepoData = []
 
     logCallback = None
-    addSpecRepoCallback = None
 
-    def __init__(self, parent, logCallback, addSpecRepoCallback):
-        super(PTSpecRepoWindow, self).__init__(parent)
+    def __init__(self, parent, logCallback):
+        super(PTSpecRepoFrame, self).__init__(parent, wx.ID_ANY, u"Podspec Repo List", size=(600, 400))
 
         self.logCallback = logCallback
-        self.addSpecRepoCallback = addSpecRepoCallback
         self.SetupUI()
         PTCommand().getSpecRepoList(self.logCallback, self.OnGetSpecRepoListCompleteCallback)
+
+        self.CentreOnScreen()
+        self.Show(True)
 
     def OnGetSpecRepoListCompleteCallback(self, specRepoList):
         self.specRepoData = specRepoList
@@ -37,10 +41,10 @@ class PTSpecRepoWindow (wx.Window):
         self.specRepoTable.SetAutoLayout(1)
 
         self.specRepoTable.SetColLabelValue(0, u"Name")
-        self.specRepoTable.SetColSize(0, 200)
+        self.specRepoTable.SetColSize(0, 180)
 
         self.specRepoTable.SetColLabelValue(1, u"Remote path")
-        self.specRepoTable.SetColSize(1, 400)
+        self.specRepoTable.SetColSize(1, 320)
 
         self.specRepoTable.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnCellLeftClick)
         self.specRepoTable.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.OnLabelLeftClick)
@@ -63,7 +67,6 @@ class PTSpecRepoWindow (wx.Window):
         sizer.Add(hBox, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 10)
 
         self.SetSizer(sizer)
-        self.Fit()
 
     def AppendSpecRepo(self, row, specRepo):
         self.specRepoTable.AppendRows(1)
@@ -84,7 +87,8 @@ class PTSpecRepoWindow (wx.Window):
         self.deleteSpecRepoBtn.Enable(False)
 
     def OnAddSpecRepo(self, event):
-        self.addSpecRepoCallback()
+        self.addSpecDialog = PTAddSpecRepoDialog(self, self.logCallback, self.OnAddSpecRepoCompleteCallback)
+        self.addSpecDialog.ShowWindowModal()
 
     def OnDeleteSpecRepo(self, event):
         row = self.specRepoTable.SelectedRows[0]
@@ -109,6 +113,10 @@ class PTSpecRepoWindow (wx.Window):
 
     def OnLabelLeftClick(self, event):
         pass
+
+    def OnAddSpecRepoCompleteCallback(self, name, remotePath):
+        self.addSpecDialog.EndModal(0)
+        self.addSpecRepo(name, remotePath)
 
     def addSpecRepo(self, name, remotePath):
         self.ClearSelection()

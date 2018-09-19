@@ -50,6 +50,19 @@ class PTModuleViewModel (wx.dataview.PyDataViewModel):
                 return tree.val.remoteVersion
         return ""
 
+    def GetParent(self, item):
+        if item.ID == None:
+            return wx.dataview.NullDataViewItem
+
+        parentObj = self.ItemToObject(item).parent
+        if parentObj == None:
+            return wx.dataview.NullDataViewItem
+        else:
+            return self.ObjectToItem(parentObj)
+
+    def SetValue(self, variant, item, col):
+        return True
+
     def HasContainerColumns(self, item):
         tree = self.ItemToObject(item)
         return len(tree.children) > 0
@@ -64,24 +77,24 @@ class PTModuleViewModel (wx.dataview.PyDataViewModel):
 
     def ItemAdded(self, parent, item):
         print "ItemAdded parent:"+parent+" item:"+item
-        return False
+        return True
 
     def ItemChanged(self, item):
         print "ItemChanged item:"+item
-        return False
+        return True
 
     def ItemDeleted(self, parent, item):
         print "ItemDeleted parent:"+parent+" item:"+item
-        return False
+        return True
 
     def ItemsAdded(self, parent, items):
         print "ItemDeleted parent:"+parent+" items:"+items
-        return False
+        return True
 
     def ItemsChanged(self, items):
         print "ItemsChanged items:"+items
-        return False
+        return True
 
     def ItemsDeleted(self, parent, items):
         print "ItemsDeleted parent:"+parent+" items:"+items
-        return False
+        return True

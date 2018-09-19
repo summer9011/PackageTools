@@ -18,6 +18,10 @@ class PTModuleWindow (wx.Window):
     dataView = None
     fileDrop = None
 
+    refreshBtn = None
+    publishBtn = None
+    deleteBtn = None
+
     moduleTree = None
     dataViewModel = None
 
@@ -30,9 +34,10 @@ class PTModuleWindow (wx.Window):
         self.CreateModuleTree()
         self.SetupUI()
         self.UpdateDataView()
+        self.RefreshModuleVersions()
 
     def CreateModuleTree(self):
-        moduleList = PTDBManager().getModuleList()
+        moduleList = PTDBManager().getModuleList(self.logCallback)
         for module in moduleList:
             self.AddModuleInTree(module)
 
@@ -45,7 +50,7 @@ class PTModuleWindow (wx.Window):
             mName = "Trunk"
         else:
             name = module.trunkName
-            mName = module.name
+            mName = "Branch \""+module.name+"\""
 
         foundTree = None
         for tree in self.moduleTree.children:
@@ -81,12 +86,36 @@ class PTModuleWindow (wx.Window):
         self.dataView.AppendTextColumn(u"Latest Version", 2, width=160)
         self.dataView.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.DataViewSelectedRow)
 
+        self.refreshBtn = wx.Button(self, wx.ID_ANY, u"Refresh versions")
+        self.refreshBtn.Bind(wx.EVT_BUTTON, self.OnRefreshVersions)
+
+        self.publishBtn = wx.Button(self, wx.ID_ANY, u"Publish module")
+        self.publishBtn.Bind(wx.EVT_BUTTON, self.OnPublishVersion)
+
+        self.deleteBtn = wx.Button(self, wx.ID_ANY, u"Delete module")
+        self.deleteBtn.Bind(wx.EVT_BUTTON, self.OnDeleteVersion)
+
+        b = wx.BoxSizer(wx.HORIZONTAL)
+        b.Add(self.refreshBtn, 0, wx.RIGHT, 30)
+        b.Add(self.publishBtn, 0, wx.RIGHT, 30)
+        b.Add(self.deleteBtn, 0)
+
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.dataView, 1, wx.EXPAND|wx.ALL, 10)
+        sizer.Add(b, 0, wx.EXPAND|wx.ALL, 10)
         sizer.Add(self.dropBox, 0, wx.EXPAND|wx.ALL, 10)
 
         self.SetSizer(sizer)
         self.Fit()
+
+    def OnRefreshVersions(self, event):
+        self.RefreshModuleVersions()
+
+    def OnPublishVersion(self, event):
+        print("publish")
+
+    def OnDeleteVersion(self, event):
+        print("delete")
 
     def UpdateDataView(self):
         if self.moduleTree != None:
@@ -97,10 +126,17 @@ class PTModuleWindow (wx.Window):
             for tree in self.moduleTree.children:
                 self.dataView.Expand(self.dataViewModel.ObjectToItem(tree))
 
-            self.RefreshModuleVersions()
-
     def RefreshModuleVersions(self):
-        print "RefreshModuleVersions"
+        mTrees = []
+        for tree in self.moduleTree.children:
+            for mTree in tree.children:
+                mTrees.append(mTree)
+        PTModuleHelper.asyncModuleVersions(mTrees, self.logCallback, self.RefreshModuleVersionsCallback)
+
+    def RefreshModuleVersionsCallback(self, mTree):
+        item = self.dataViewModel.ObjectToItem(mTree)
+        self.dataViewModel.ChangeValue(mTree.val.localVersion, item, 1)
+        self.dataViewModel.ChangeValue(mTree.val.remoteVersion, item, 2)
 
     def DataViewSelectedRow(self, event):
         item = event.GetItem()
@@ -136,3 +172,4 @@ class PTModuleWindow (wx.Window):
     def AddModuleInView(self, module):
         self.AddModuleInTree(module)
         self.UpdateDataView()
+        self.RefreshModuleVersions()
