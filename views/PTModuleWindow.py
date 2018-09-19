@@ -75,6 +75,18 @@ class PTModuleWindow (wx.Window):
         foundM.name = mName
         foundM.val = module
 
+    def DeleteModuleInTree(self, mTree):
+        if self.moduleTree != None:
+            removeTree = None
+            for tree in self.moduleTree.children:
+                if tree.name == mTree.val.trunkName:
+                    tree.children.remove(mTree)
+                    if len(tree.children) == 0:
+                        removeTree = tree
+                    break
+            if removeTree != None:
+                self.moduleTree.children.remove(removeTree)
+
     def SetupUI(self):
         self.fileDrop = PTFileDrop(self.OnDropFileCallback)
         self.dropBox = wx.StaticBox(self, label=u"*Drag local module here.", size=(0, 100))
@@ -91,9 +103,11 @@ class PTModuleWindow (wx.Window):
 
         self.publishBtn = wx.Button(self, wx.ID_ANY, u"Publish module")
         self.publishBtn.Bind(wx.EVT_BUTTON, self.OnPublishVersion)
+        self.publishBtn.Enable(False)
 
         self.deleteBtn = wx.Button(self, wx.ID_ANY, u"Delete module")
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.OnDeleteVersion)
+        self.deleteBtn.Enable(False)
 
         b = wx.BoxSizer(wx.HORIZONTAL)
         b.Add(self.refreshBtn, 0, wx.RIGHT, 30)
@@ -112,10 +126,16 @@ class PTModuleWindow (wx.Window):
         self.RefreshModuleVersions()
 
     def OnPublishVersion(self, event):
-        print("publish")
+        item = self.dataView.Selection
+        m = self.dataViewModel.ItemToObject(item)
+        print(m)
 
     def OnDeleteVersion(self, event):
-        print("delete")
+        item = self.dataView.Selection
+        m = self.dataViewModel.ItemToObject(item)
+        PTDBManager().deleteModule(m.val)
+        self.DeleteModuleInTree(m)
+        self.UpdateDataView()
 
     def UpdateDataView(self):
         if self.moduleTree != None:
@@ -141,7 +161,14 @@ class PTModuleWindow (wx.Window):
     def DataViewSelectedRow(self, event):
         item = event.GetItem()
         if item.GetID() != None:
-            print item
+            obj = self.dataViewModel.ItemToObject(item)
+            if obj.val != None:
+                self.publishBtn.Enable(True)
+                self.deleteBtn.Enable(True)
+                return
+
+        self.publishBtn.Enable(False)
+        self.deleteBtn.Enable(False)
 
     def OnDropFileCallback(self, filepath):
         PTModuleHelper.FindModuleInfo(filepath, self.logCallback, self.FindModuleInfoCallback)
@@ -166,7 +193,6 @@ class PTModuleWindow (wx.Window):
             PTDBManager().addNewTrunkModule(module)
         else:
             PTDBManager().addNewBranchModule(module)
-
         self.AddModuleInView(module)
 
     def AddModuleInView(self, module):

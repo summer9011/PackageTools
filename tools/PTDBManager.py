@@ -153,7 +153,6 @@ class PTDBManager:
 
     def deleteModule(self, module):
         self.openDB()
-        self.deleteModuleBranches(module.id)
         self.dbCursor.execute("delete from pt_module where id = %d;" % module.id)
         self.dbConnect.commit()
         return True

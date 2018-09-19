@@ -40,19 +40,12 @@ class PTFrame (wx.Frame):
 
         exitItem = fileMenu.Append(wx.ID_EXIT)
 
-        # Now a help menu for the about item
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(wx.ID_ABOUT)
-
-        # Make the menu bar and add the two menus to it. The '&' defines
-        # that the next letter is the "mnemonic" for the menu item. On the
-        # platforms that support it those letters are underlined and can be
-        # triggered from the keyboard.
         menuBar = wx.MenuBar()
         menuBar.Append(fileMenu, "&Configs")
         menuBar.Append(helpMenu, "&Help")
 
-        # Give the menu bar to the frame
         self.SetMenuBar(menuBar)
 
         self.Bind(wx.EVT_MENU, self.OnShowSpecRepoList,  specRepoItem)
