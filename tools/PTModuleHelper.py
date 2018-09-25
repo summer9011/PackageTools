@@ -19,10 +19,16 @@ def checkVersionBigger(str1, str2):
         f = len(str2List)
     for i in range(f):
         try:
-            if int(str1List[i]) > int(str2List[i]):
+            v1 = str1List[i]
+            if len(v1) == 0:
+                v1 = "0"
+            v2 = str2List[i]
+            if len(v2) == 0:
+                v2 = "0"
+            if int(v1) > int(v2):
                 bigger = True
                 break
-            elif int(str1List[i]) == int(str2List[i]):
+            elif int(v1) == int(v2):
                 continue
             else:
                 break
@@ -111,7 +117,8 @@ def asyncModuleVersions(mTrees, logCallback, resultCallback):
 def getVersion(mTrees, logCallback, resultCallback):
     for mTree in mTrees:
         mTree.val.remoteVersion = getModuleTagsRemoteVersion(mTree.val, logCallback)
-        resultCallback(mTree)
+        resultCallback(mTree, False)
+    resultCallback(None, True)
 
 def getModuleTagsRemoteVersion(module, logCallback):
     try:
@@ -250,3 +257,40 @@ def getLocalVersion(localPath, logCallback):
         wx.CallAfter(logCallback, "\nGet local version -- Can't find local version.\n")
 
     return localVersion
+
+def writeVersionToModule(module, version, resultCallback):
+    thread.start_new_thread(writeVersionToModuleInThread, (module, version, resultCallback))
+
+def writeVersionToModuleInThread(module, newVersion, resultCallback):
+    changed = False
+    fileName = None
+    list = os.listdir(module.path)
+    for name in list:
+        if name.endswith(".podspec"):
+            fileName = name
+            break
+    if fileName != None:
+        old_filePath = os.path.join(module.path, fileName)
+        f = open(old_filePath)
+
+        new_filePath = os.path.join(module.path, "new_"+fileName)
+        new_f = open(new_filePath, "w+")
+
+        line = f.readline()
+        while line:
+            match = re.match(r'.*s.version.*=.*\'(.*)\'', line, re.M | re.I)
+            if match:
+                version = match.group(1)
+                new_line = line.replace(version, newVersion)
+                new_f.write(new_line)
+                changed = True
+            else:
+                new_f.write(line)
+            line = f.readline()
+        f.close()
+        new_f.close()
+
+        os.remove(old_filePath)
+        os.rename(new_filePath, old_filePath)
+
+    wx.CallAfter(resultCallback, changed)

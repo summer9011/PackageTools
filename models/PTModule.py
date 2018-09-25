@@ -36,8 +36,6 @@ class PTModule:
     localVersion = ""
     remoteVersion = ""
 
-    isPublishing = False
-
     def __init__(self):
         self.id = 0
         self.name = ""
@@ -51,7 +49,8 @@ class PTModule:
         self.localVersion = ""
         self.remoteVersion = ""
 
-        self.isPublishing = False
+    def isTrunk(self):
+        return (self.trunkId == 0)
 
     def isNewer(self):
         newer = False

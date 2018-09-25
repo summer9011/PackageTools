@@ -2,6 +2,7 @@
 import wx
 import wx.grid
 from tools.PTCommand import PTCommand
+from tools.PTCommand import PTCommandPathConfig
 from views.PTAddSpecRepoDialog import PTAddSpecRepoDialog
 
 class PTSpecRepoFrame (wx.Frame):
@@ -12,8 +13,6 @@ class PTSpecRepoFrame (wx.Frame):
 
     addSpecDialog = None
 
-    specRepoData = []
-
     logCallback = None
 
     def __init__(self, parent, logCallback):
@@ -21,18 +20,24 @@ class PTSpecRepoFrame (wx.Frame):
 
         self.logCallback = logCallback
         self.SetupUI()
-        PTCommand().getSpecRepoList(self.logCallback, self.OnGetSpecRepoListCompleteCallback)
+
+        if PTCommandPathConfig.podspecList == None:
+            PTCommand().getSpecRepoList(self.logCallback, self.OnGetSpecRepoListCompleteCallback)
+        else:
+            self.OnSuccessGetSpecRepoList()
 
         self.CentreOnScreen()
         self.Show(True)
 
     def OnGetSpecRepoListCompleteCallback(self, specRepoList):
-        self.specRepoData = specRepoList
+        PTCommandPathConfig.podspecList = specRepoList
+        self.OnSuccessGetSpecRepoList()
 
+    def OnSuccessGetSpecRepoList(self):
         row = 0
-        for specRepo in self.specRepoData:
+        for specRepo in PTCommandPathConfig.podspecList:
             self.AppendSpecRepo(row, specRepo)
-            row+=1
+            row += 1
 
     def SetupUI(self):
         # Table
@@ -92,14 +97,14 @@ class PTSpecRepoFrame (wx.Frame):
 
     def OnDeleteSpecRepo(self, event):
         row = self.specRepoTable.SelectedRows[0]
-        specRepo = self.specRepoData[row]
+        specRepo = PTCommandPathConfig.podspecList[row]
         PTCommand().removeSpecRepo(specRepo[0], self.logCallback, self.OnDeleteSpecRepoCompleteCallback)
 
     def OnDeleteSpecRepoCompleteCallback(self, name):
         row = self.specRepoTable.SelectedRows[0]
-        specRepo = self.specRepoData[row]
+        specRepo = PTCommandPathConfig.podspecList[row]
 
-        self.specRepoData.remove(specRepo)
+        PTCommandPathConfig.podspecList.remove(specRepo)
         self.specRepoTable.DeleteRows(row)
         self.ClearSelection()
 
@@ -120,5 +125,5 @@ class PTSpecRepoFrame (wx.Frame):
 
     def addSpecRepo(self, name, remotePath):
         self.ClearSelection()
-        self.specRepoData.append((name, remotePath))
-        self.AppendSpecRepo(len(self.specRepoData)-1, (name, remotePath))
+        PTCommandPathConfig.podspecList.append((name, remotePath))
+        self.AppendSpecRepo(len(PTCommandPathConfig.podspecList)-1, (name, remotePath))

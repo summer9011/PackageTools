@@ -5,13 +5,14 @@ import os
 
 from tools import PTModuleHelper
 from tools.PTDBManager import PTDBManager
-from tools.PTCommand import PTCommand
 from PTFileDrop import PTFileDrop
 from models.PTModuleViewModel import PTModuleViewModel
 from models.PTModuleViewModel import PTModuleTree
 from models.PTModule import PTModule
-from models.PTModule import PTModuleRepo
 from PTRepoDialog import PTRepoDialog
+from PTVersionDialog import PTVersionDialog
+from PTPublishDialog import PTPublishDialog
+from PTChooseSpecRepoDialog import PTChooseSpecRepoDialog
 
 class PTModuleWindow (wx.Window):
     dropBox = None
@@ -128,11 +129,28 @@ class PTModuleWindow (wx.Window):
     def OnPublishVersion(self, event):
         item = self.dataView.Selection
         m = self.dataViewModel.ItemToObject(item)
-        print(m)
+        dialog = PTVersionDialog(self, m.val, self.OnChangeVersionCallback)
+        dialog.ShowWindowModal()
+
+    def OnChangeVersionCallback(self, module):
+        self.dataViewModel.ChangeValue(module.localVersion, self.dataView.Selection, 1)
+        progressDialog = PTPublishDialog(self, module, self.logCallback, self.OnChooseRepoCallback, self.OnPublishModuleCallback)
+        progressDialog.ShowWindowModal()
+
+    def OnChooseRepoCallback(self, module):
+        chooseDialog = PTChooseSpecRepoDialog(self, module, self.OnChooseRepoCompleteCallback)
+        chooseDialog.ShowModal()
+
+    def OnChooseRepoCompleteCallback(self, module):
+        print(module)
+
+    def OnPublishModuleCallback(self, module):
+        print(module)
 
     def OnDeleteVersion(self, event):
         item = self.dataView.Selection
         m = self.dataViewModel.ItemToObject(item)
+        self.dataView.Unselect(item)
         PTDBManager().deleteModule(m.val)
         self.DeleteModuleInTree(m)
         self.UpdateDataView()
@@ -147,16 +165,26 @@ class PTModuleWindow (wx.Window):
                 self.dataView.Expand(self.dataViewModel.ObjectToItem(tree))
 
     def RefreshModuleVersions(self):
+        self.refreshBtn.Enable(False)
+        self.publishBtn.Enable(False)
+        self.deleteBtn.Enable(False)
+
         mTrees = []
         for tree in self.moduleTree.children:
             for mTree in tree.children:
                 mTrees.append(mTree)
         PTModuleHelper.asyncModuleVersions(mTrees, self.logCallback, self.RefreshModuleVersionsCallback)
 
-    def RefreshModuleVersionsCallback(self, mTree):
-        item = self.dataViewModel.ObjectToItem(mTree)
-        self.dataViewModel.ChangeValue(mTree.val.localVersion, item, 1)
-        self.dataViewModel.ChangeValue(mTree.val.remoteVersion, item, 2)
+    def RefreshModuleVersionsCallback(self, mTree, allDone):
+        if allDone == True:
+            self.refreshBtn.Enable(True)
+            if self.dataView.SelectedItemsCount > 0:
+                self.publishBtn.Enable(True)
+                self.deleteBtn.Enable(True)
+        else:
+            item = self.dataViewModel.ObjectToItem(mTree)
+            self.dataViewModel.ChangeValue(mTree.val.localVersion, item, 1)
+            self.dataViewModel.ChangeValue(mTree.val.remoteVersion, item, 2)
 
     def DataViewSelectedRow(self, event):
         item = event.GetItem()

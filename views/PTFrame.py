@@ -2,8 +2,6 @@
 import wx
 import wx.aui
 
-from tools.PTCommand import PTCommand
-
 from views.PTModuleWindow import PTModuleWindow
 from views.PTLoggerWindow import PTLoggerWindow
 

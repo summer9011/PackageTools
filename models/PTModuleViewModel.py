@@ -44,7 +44,15 @@ class PTModuleViewModel (wx.dataview.PyDataViewModel):
             return tree.name
         elif col == 1:
             if tree.val != None:
-                return tree.val.localVersion
+                if len(tree.val.remoteVersion) > 0:
+                    if tree.val.isNewer() == True:
+                        return tree.val.localVersion
+                    elif tree.val.isOlder() == True:
+                        return tree.val.localVersion
+                    else:
+                        return tree.val.localVersion
+                else:
+                    return tree.val.localVersion
         elif col == 2:
             if tree.val != None:
                 return tree.val.remoteVersion

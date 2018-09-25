@@ -5,6 +5,7 @@ import wx
 import re
 import os
 import sqlite3
+import enchant
 from PTDBManager import PTDBManager
 from PTCommandPathConfig import PTCommandPathConfig
 
@@ -19,51 +20,96 @@ class PTCommand:
             cls.__instance=object.__new__(cls, *args, **kwargs)
         return cls.__instance
 
+    def svnUpdateModule(self, module, logCallback, resultCallback):
+        thread.start_new_thread(self.svnUpdateModuleInThread, (module, logCallback, resultCallback))
+
+    def svnUpdateModuleInThread(self, module, logCallback, resultCallback):
+        testSvn = "cd %s; %s up" % (module.path, PTCommandPathConfig().command("svn"))
+        self.logCommand(testSvn, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(testSvn)
+        self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(resultCallback, copyRet, copyOutput)
+
+    def svnCheckConflict(self, module, logCallback, resultCallback):
+        thread.start_new_thread(self.svnCheckConflictInThread, (module, logCallback, resultCallback))
+
+    def svnCheckConflictInThread(self, module, logCallback, resultCallback):
+        d = enchant.Dict("en_US")
+        testSvn = "cd %s; %s st" % (module.path, PTCommandPathConfig().command("svn"))
+        self.logCommand(testSvn, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(testSvn)
+        self.logOutput(copyRet, copyOutput, logCallback)
+
+        if copyRet == 0:
+            files = []
+            conflictFiles = []
+            if len(copyOutput) > 0:
+                for line in copyOutput.split('\n'):
+                    str = line[0:8].strip()
+                    if len(str) > 1 and d.check(str) == True:
+                        break
+                    else:
+                        if line[0] == "A" or line[0] == "D" or line[0] == "M" or line[0] == "R" or line[0] == "?" or line[0] == "!":
+                            files.append((line[0], line[8:]))
+                        elif line[0] == "C":
+                            conflictFiles.append((line[0], line[8:]))
+            wx.CallAfter(resultCallback, copyRet, (files, conflictFiles))
+        else:
+            wx.CallAfter(resultCallback, copyRet, copyOutput)
+
+    def svnCommitFiles(self, module, commitFiles, addFiles, deleteFiles, message, logCallback, resultCallback):
+        thread.start_new_thread(self.svnCommitFilesInThread, (module, commitFiles, addFiles, deleteFiles, message, logCallback, resultCallback))
+
+    def svnCommitFilesInThread(self, module, commitFiles, addFiles, deleteFiles, message, logCallback, resultCallback):
+        addFileSuccess = True
+        if len(addFiles) > 0:
+            testSvn = "cd %s; %s add %s" % (module.path, PTCommandPathConfig().command("svn"), " ".join(addFiles))
+            self.logCommand(testSvn, logCallback)
+            copyRet, copyOutput = commands.getstatusoutput(testSvn)
+            self.logOutput(copyRet, copyOutput, logCallback)
+            addFileSuccess = (copyRet == 0)
+
+        deleteFileSuccess = True
+        if len(deleteFiles) > 0:
+            testSvn = "cd %s; %s del %s" % (module.path, PTCommandPathConfig().command("svn"), " ".join(deleteFiles))
+            self.logCommand(testSvn, logCallback)
+            copyRet, copyOutput = commands.getstatusoutput(testSvn)
+            self.logOutput(copyRet, copyOutput, logCallback)
+            deleteFileSuccess = (copyRet == 0)
+
+        commitFileSuccess = True
+        if len(addFiles) > 0 or len(deleteFiles) > 0 or len(commitFiles) > 0:
+            needCommitFiles = addFiles+deleteFiles+commitFiles
+            testSvn = "cd %s; %s ci %s -m \"%s\"" % (module.path, PTCommandPathConfig().command("svn"), " ".join(needCommitFiles), message)
+            self.logCommand(testSvn, logCallback)
+            copyRet, copyOutput = commands.getstatusoutput(testSvn)
+            self.logOutput(copyRet, copyOutput, logCallback)
+            commitFileSuccess = (copyRet == 0)
+
+        wx.CallAfter(resultCallback, (addFileSuccess and deleteFileSuccess and commitFileSuccess))
+
+    def tagModule(self, module, logCallback, completeCallback):
+        thread.start_new_thread(self.tagModuleInThread, (module, logCallback, completeCallback))
+
+    def tagModuleInThread(self, module, logCallback, completeCallback):
+        modulePath = module.repo.url+"/"+module.name
+        tagPath = modulePath+"/tags/"+module.localVersion
+        if module.isTrunk() == True:
+            fromPath = modulePath+"/trunk"
+        else:
+            fromPath = modulePath+"/branches/"+module.name
+        tagCopy = "%s copy %s %s -m \"release to %s\"" % (PTCommandPathConfig().command("svn"), fromPath, tagPath, module.localVersion)
+        self.logCommand(tagCopy, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(tagCopy)
+        self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(completeCallback, copyRet, copyOutput)
+
     def publishModule(self, module, logCallback, completeCallback):
-        thread.start_new_thread(self.publishModuleWithShell, (module, logCallback, completeCallback))
+        thread.start_new_thread(self.publishModuleInThread, (module, logCallback, completeCallback))
 
-    def publishModuleWithShell(self, module, logCallback, completeCallback):
-        codeRepoInfo = PTDBManager().getCodeRepo(module.codeRepoId)
-        specRepoInfo = PTDBManager().getSpecRepo(module.specRepoId)
-        if codeRepoInfo != None and specRepoInfo != None:
-            moduelRemotePath = "%s/%s" % (codeRepoInfo.remotePath, module.name)
-            svnCopyToTag = "%s copy %s/trunk %s/tags/%s -m \"release to %s\"" % (PTCommandPathConfig().command("svn"), moduelRemotePath, moduelRemotePath, module.localVersion, module.localVersion)
-            self.logCommand(svnCopyToTag, logCallback)
-            copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
-            self.logOutput(copyRet, copyOutput, logCallback)
-            if copyRet == 0:
-                self.publishPodspecWithShell(module.localPath, module, specRepoInfo, logCallback, completeCallback)
-            else:
-                wx.CallAfter(logCallback, "copy module %s trunk to tags error!!!\n" % module.name)
-                wx.CallAfter(completeCallback, False, module)
-        else:
-            wx.CallAfter(logCallback, "podspec repo not exist!!!\n")
-            wx.CallAfter(completeCallback, False, module)
-
-    def publishModuleBranch(self, module, branchInfo, branchBindInfo, logCallback, completeCallback):
-        thread.start_new_thread(self.publishModuleBranchWithShell, (module, branchInfo, branchBindInfo, logCallback, completeCallback))
-
-    def publishModuleBranchWithShell(self, module, branchInfo, branchBindInfo, logCallback, completeCallback):
-        codeRepoInfo = PTDBManager().getCodeRepo(module.codeRepoId)
-        specRepoInfo = PTDBManager().getSpecRepo(module.specRepoId)
-        if codeRepoInfo != None and specRepoInfo != None:
-            moduleRemotePath = "%s/%s" % (codeRepoInfo.remotePath, module.name)
-            moduleBranchRemotePath = "%s/branches/%s" % (moduleRemotePath, branchInfo.remoteName)
-            svnCopyToTag = "%s copy %s %s/tags/%s -m \"release to %s\"" % (PTCommandPathConfig().command("svn"), moduleBranchRemotePath, moduleRemotePath, branchInfo.version, branchInfo.version)
-            self.logCommand(svnCopyToTag, logCallback)
-            copyRet, copyOutput = commands.getstatusoutput(svnCopyToTag)
-            self.logOutput(copyRet, copyOutput, logCallback)
-            if copyRet == 0:
-                self.publishPodspecWithShell(branchBindInfo.localPath, module, specRepoInfo, logCallback, completeCallback)
-            else:
-                wx.CallAfter(logCallback, "copy module %s branch %s to tags error!!!\n" % (module.name, branchInfo.remoteName))
-                wx.CallAfter(completeCallback, False, module)
-        else:
-            wx.CallAfter(logCallback, "podspec repo not exist!!!\n")
-            wx.CallAfter(completeCallback, False, module)
-
-    def publishPodspecWithShell(self, localPath, module, specRepoInfo, logCallback, completeCallback):
-        podPush = "cd %s; %s repo-svn push %s %s.podspec" % (localPath, PTCommandPathConfig().command("pod"), specRepoInfo.name, module.name)
+    def publishModuleInThread(self, module, logCallback, completeCallback):
+        podPush = "cd %s; %s repo-svn push %s %s.podspec" % (
+        localPath, PTCommandPathConfig().command("pod"), specRepoInfo.name, module.name)
         self.logCommand(podPush, logCallback)
         pushRet, pushOutput = commands.getstatusoutput(podPush)
         self.logOutput(pushRet, pushOutput, logCallback)
@@ -74,6 +120,7 @@ class PTCommand:
         else:
             wx.CallAfter(logCallback, "push %s's podspec to repo failed!!!\n" % module.name)
             wx.CallAfter(completeCallback, False, module)
+
 
     # Pod manager
     def getSpecRepoList(self, logCallback, completeCallback):

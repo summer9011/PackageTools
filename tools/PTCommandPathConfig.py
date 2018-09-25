@@ -6,6 +6,7 @@ import json
 class PTCommandPathConfig:
     __instance = None
     configDict = None
+    podspecList = None
 
     def __init__(self):
         pass
