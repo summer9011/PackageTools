@@ -38,6 +38,26 @@ class PTModuleViewModel (wx.dataview.PyDataViewModel):
             children.append(self.ObjectToItem(tree))
         return len(moduleTree.children)
 
+    def GetAttr(self, item, col, attr):
+        tree = self.ItemToObject(item)
+        if col == 1 and tree.val != None:
+            if len(tree.val.remoteVersion) > 0:
+                if tree.val.isNewer() == True:
+                    attr.SetColour(wx.BLUE)
+                    attr.SetBold(True)
+                    return True
+                elif tree.val.isOlder() == True:
+                    attr.SetColour(wx.RED)
+                    attr.SetBold(True)
+                    return True
+                else:
+                    attr.SetColour(wx.BLACK)
+                    return True
+            else:
+                attr.SetColour(wx.BLACK)
+                return True
+        return False
+
     def GetValue(self, item, col):
         tree = self.ItemToObject(item)
         if col == 0:

@@ -5,19 +5,14 @@ import os
 
 from tools import PTModuleHelper
 from tools.PTDBManager import PTDBManager
-from PTFileDrop import PTFileDrop
 from models.PTModuleViewModel import PTModuleViewModel
 from models.PTModuleViewModel import PTModuleTree
-from models.PTModule import PTModule
-from PTRepoDialog import PTRepoDialog
 from PTVersionDialog import PTVersionDialog
 from PTPublishDialog import PTPublishDialog
 from PTChooseSpecRepoDialog import PTChooseSpecRepoDialog
 
 class PTModuleWindow (wx.Window):
-    dropBox = None
     dataView = None
-    fileDrop = None
 
     progressDialog = None
 
@@ -91,10 +86,6 @@ class PTModuleWindow (wx.Window):
                 self.moduleTree.children.remove(removeTree)
 
     def SetupUI(self):
-        self.fileDrop = PTFileDrop(self.OnDropFileCallback)
-        self.dropBox = wx.StaticBox(self, label=u"*Drag local module here.", size=(0, 100))
-        self.dropBox.SetDropTarget(self.fileDrop)
-
         self.dataView = wx.dataview.DataViewCtrl(self)
         self.dataView.AppendTextColumn(u"Module", 0, width=280)
         self.dataView.AppendTextColumn(u"Version", 1, width=160)
@@ -120,7 +111,6 @@ class PTModuleWindow (wx.Window):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.dataView, 1, wx.EXPAND|wx.ALL, 10)
         sizer.Add(b, 0, wx.EXPAND|wx.ALL, 10)
-        sizer.Add(self.dropBox, 0, wx.EXPAND|wx.ALL, 10)
 
         self.SetSizer(sizer)
         self.Fit()
@@ -212,25 +202,7 @@ class PTModuleWindow (wx.Window):
         self.publishBtn.Enable(False)
         self.deleteBtn.Enable(False)
 
-    def OnDropFileCallback(self, filepath):
-        PTModuleHelper.FindModuleInfo(filepath, self.logCallback, self.FindModuleInfoCallback)
-
-    def FindModuleInfoCallback(self, trunkName, path, version, url, user):
-        if trunkName == None:
-            wx.MessageBox(u"Can't find module info.", u"Error", wx.OK | wx.ICON_INFORMATION)
-        else:
-            m = PTModule()
-            m.name = os.path.basename(path)
-            m.trunkName = trunkName
-            m.path = path
-            m.localVersion = version
-
-            urlArr = url.split("/")
-            urlArr.pop()
-            dlg = PTRepoDialog(self, m, "/".join(urlArr), user, self.OnAddModuleCallback)
-            dlg.ShowWindowModal()
-
-    def OnAddModuleCallback(self, module, isTrunk):
+    def OnAddModule(self, module, isTrunk):
         if isTrunk == True:
             PTDBManager().addNewTrunkModule(module)
         else:

@@ -7,6 +7,7 @@ from views.PTLoggerWindow import PTLoggerWindow
 
 from views.PTSpecRepoFrame import PTSpecRepoFrame
 from views.PTEnvironmentFrame import PTEnvironmentFrame
+from views.PTAddLocalModuleFrame import PTAddLocalModuleFrame
 
 class PTFrame (wx.Frame):
     mgr = None
@@ -28,28 +29,35 @@ class PTFrame (wx.Frame):
         self.OnDisplayLogger(None)
 
     def SetupMenuBar(self):
+        addMenu = wx.Menu()
+        addLocalModuleItem = addMenu.Append(-1, "&Add Local Module...\tCtrl-A", "Add local module")
+
         fileMenu = wx.Menu()
-
-        specRepoItem = fileMenu.Append(-1, "&Podspec Repo List...\tCtrl-P",
-                "Show Podspec repo list")
+        specRepoItem = fileMenu.Append(-1, "&Podspec Repo List...\tCtrl-P", "Show Podspec repo list")
         fileMenu.AppendSeparator()
-        environmentItem = fileMenu.Append(-1, "&Commands...\tCtrl-E",
-                "Show Commands paths")
-
+        environmentItem = fileMenu.Append(-1, "&Commands...\tCtrl-E", "Show Commands paths")
         exitItem = fileMenu.Append(wx.ID_EXIT)
 
         helpMenu = wx.Menu()
         aboutItem = helpMenu.Append(wx.ID_ABOUT)
         menuBar = wx.MenuBar()
+        menuBar.Append(addMenu, "&Add")
         menuBar.Append(fileMenu, "&Configs")
         menuBar.Append(helpMenu, "&Help")
 
         self.SetMenuBar(menuBar)
 
+        self.Bind(wx.EVT_MENU, self.OnAddLocalModule,  addLocalModuleItem)
         self.Bind(wx.EVT_MENU, self.OnShowSpecRepoList,  specRepoItem)
         self.Bind(wx.EVT_MENU, self.OnShowCommands,  environmentItem)
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
+
+    def OnAddLocalModule(self, event):
+        PTAddLocalModuleFrame(self, self.OnLogCallback, self.OnAddLocalModuelCallback)
+
+    def OnAddLocalModuelCallback(self, module, isTrunk):
+        self.moduleWindow.OnAddModule(module, isTrunk)
 
     def OnShowSpecRepoList(self, event):
         PTSpecRepoFrame(self, self.OnLogCallback)
