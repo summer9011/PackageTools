@@ -157,6 +157,12 @@ class PTDBManager:
         self.dbConnect.commit()
         return True
 
+    def updateModuleSpecRepo(self, module, specName):
+        self.openDB()
+        self.dbCursor.execute("update pt_module set spec_name=\"%s\" where id=%d" % (specName, module.id))
+        self.dbConnect.commit()
+        return True
+
     # Module repo methods
     def findModuleRepo(self, url):
         self.openDB()

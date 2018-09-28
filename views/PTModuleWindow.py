@@ -19,6 +19,8 @@ class PTModuleWindow (wx.Window):
     dataView = None
     fileDrop = None
 
+    progressDialog = None
+
     refreshBtn = None
     publishBtn = None
     deleteBtn = None
@@ -134,18 +136,30 @@ class PTModuleWindow (wx.Window):
 
     def OnChangeVersionCallback(self, module):
         self.dataViewModel.ChangeValue(module.localVersion, self.dataView.Selection, 1)
-        progressDialog = PTPublishDialog(self, module, self.logCallback, self.OnChooseRepoCallback, self.OnPublishModuleCallback)
-        progressDialog.ShowWindowModal()
+        self.progressDialog = PTPublishDialog(self, module, self.logCallback, self.OnChooseRepoCallback, self.OnPublishModuleCallback)
+        self.progressDialog.ShowWindowModal()
 
     def OnChooseRepoCallback(self, module):
         chooseDialog = PTChooseSpecRepoDialog(self, module, self.OnChooseRepoCompleteCallback)
-        chooseDialog.ShowModal()
+        chooseDialog.Show(True)
 
-    def OnChooseRepoCompleteCallback(self, module):
-        print(module)
+    def OnChooseRepoCompleteCallback(self, cancel):
+        if cancel == True:
+            self.progressDialog.EndModal(0)
+            self.refreshBtn.Enable(True)
+            if self.dataView.SelectedItemsCount > 0:
+                self.publishBtn.Enable(True)
+                self.deleteBtn.Enable(True)
+        else:
+            self.progressDialog.ContinueToPublish()
 
     def OnPublishModuleCallback(self, module):
-        print(module)
+        self.dataViewModel.ChangeValue(module.remoteVersion, self.dataView.Selection, 2)
+
+        self.refreshBtn.Enable(True)
+        if self.dataView.SelectedItemsCount > 0:
+            self.publishBtn.Enable(True)
+            self.deleteBtn.Enable(True)
 
     def OnDeleteVersion(self, event):
         item = self.dataView.Selection

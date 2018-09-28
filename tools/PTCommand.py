@@ -108,8 +108,7 @@ class PTCommand:
         thread.start_new_thread(self.publishModuleInThread, (module, logCallback, completeCallback))
 
     def publishModuleInThread(self, module, logCallback, completeCallback):
-        podPush = "cd %s; %s repo-svn push %s %s.podspec" % (
-        localPath, PTCommandPathConfig().command("pod"), specRepoInfo.name, module.name)
+        podPush = "cd %s; %s repo-svn push %s %s.podspec" % (module.path, PTCommandPathConfig().command("pod"), module.sepcName, module.trunkName)
         self.logCommand(podPush, logCallback)
         pushRet, pushOutput = commands.getstatusoutput(podPush)
         self.logOutput(pushRet, pushOutput, logCallback)
@@ -120,7 +119,6 @@ class PTCommand:
         else:
             wx.CallAfter(logCallback, "push %s's podspec to repo failed!!!\n" % module.name)
             wx.CallAfter(completeCallback, False, module)
-
 
     # Pod manager
     def getSpecRepoList(self, logCallback, completeCallback):

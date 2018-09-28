@@ -50,8 +50,6 @@ class PTPublishDialog (wx.Dialog):
         PTCommand().svnUpdateModule(self.module, self.logCallback, self.OnSvnUpdateCallback)
 
     def OnSvnUpdateCallback(self, success, result):
-        self.OnChooseSpecRepo()
-        return
         if success == 0:
             self.progressTip.SetLabel(u"Svn check conflict...")
             self.progress.SetValue(30, "30%")
@@ -95,7 +93,7 @@ class PTPublishDialog (wx.Dialog):
     def OnTagModuleCallback(self, success, result):
         if success == 0:
             if len(self.module.sepcName) > 0:
-                self.OnPublishModuleCallback(0, None)
+                self.ContinueToPublish()
             else:
                 self.progressTip.SetLabel(u"Select module podspec repo...")
                 self.progress.SetValue(85, "85%")
@@ -114,10 +112,16 @@ class PTPublishDialog (wx.Dialog):
     def OnChooseSpecRepo(self):
         self.chooseRepoCallback(self.module)
 
+    def ContinueToPublish(self):
+        self.progressTip.SetLabel(u"Publish module to pod repo...")
+        self.progress.SetValue(90, "90%")
+        PTCommand().publishModule(self.module, self.logCallback, self.OnPublishModuleCallback)
+
     def OnPublishModuleCallback(self, success, result):
-        if success == 0:
-            self.progressTip.SetLabel(u"Publish module to pod...")
-            self.progress.SetValue(90, "90%")
-            PTCommand().publishModule(self.module, self.logCallback, self.OnPublishModuleCallback)
+        if success == True:
+            self.module.remoteVersion = self.module.localVersion
+            self.callback(self.module)
+            self.EndModal(wx.ID_OK)
         else:
-            print(result)
+            wx.MessageBox(u"Publish module to pod repo failed.\n%s" % result, u"Error", wx.OK | wx.ICON_INFORMATION)
+            self.EndModal(wx.ID_OK)
