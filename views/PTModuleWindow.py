@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import wx
 import wx.dataview
-import os
+from tools.PTCommand import PTCommand
 
 from tools import PTModuleHelper
 from tools.PTDBManager import PTDBManager
@@ -19,6 +19,7 @@ class PTModuleWindow (wx.Window):
     refreshBtn = None
     publishBtn = None
     deleteBtn = None
+    updateBtn = None
 
     moduleTree = None
     dataViewModel = None
@@ -103,10 +104,15 @@ class PTModuleWindow (wx.Window):
         self.deleteBtn.Bind(wx.EVT_BUTTON, self.OnDeleteVersion)
         self.deleteBtn.Enable(False)
 
+        self.updateBtn = wx.Button(self, wx.ID_ANY, u"Update module")
+        self.updateBtn.Bind(wx.EVT_BUTTON, self.OnUpdateModule)
+        self.updateBtn.Enable(False)
+
         b = wx.BoxSizer(wx.HORIZONTAL)
         b.Add(self.refreshBtn, 0, wx.RIGHT, 30)
         b.Add(self.publishBtn, 0, wx.RIGHT, 30)
-        b.Add(self.deleteBtn, 0)
+        b.Add(self.deleteBtn, 0, wx.RIGHT, 30)
+        b.Add(self.updateBtn, 0)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.dataView, 1, wx.EXPAND|wx.ALL, 10)
@@ -114,6 +120,35 @@ class PTModuleWindow (wx.Window):
 
         self.SetSizer(sizer)
         self.Fit()
+
+    def OnUpdateModule(self, event):
+        self.ResetBtnsEnable(False)
+        item = self.dataView.Selection
+        m = self.dataViewModel.ItemToObject(item)
+        PTCommand().svnUpdateModule(m.val, self.logCallback, self.OnUpdateModuleCallback)
+
+    def OnUpdateModuleCallback(self, success, result):
+        if success == 0:
+            item = self.dataView.Selection
+            m = self.dataViewModel.ItemToObject(item)
+            PTCommand().svnCheckConflict(m.val, self.logCallback, self.OnCheckConflictCallback)
+        else:
+            wx.MessageBox(u"Svn update failed.\n%s" % result, u"Error", wx.OK | wx.ICON_INFORMATION)
+            self.ResetBtnsEnable(True)
+
+    def OnCheckConflictCallback(self, success, result):
+        if success == 0:
+            conflictFiles = result[1]
+            if len(conflictFiles) == 0:
+                item = self.dataView.Selection
+                m = self.dataViewModel.ItemToObject(item)
+                m.val.localVersion = PTModuleHelper.getLocalVersion(m.val.path, self.logCallback)
+                self.dataViewModel.ChangeValue(m.val.localVersion, item, 1)
+            else:
+                wx.MessageBox(u"You have %d conflict files, please solve them.\nConflict files:\n%s" % (len(conflictFiles), conflictFiles), u"Error", wx.OK | wx.ICON_INFORMATION)
+        else:
+            wx.MessageBox(u"Svn check conflict failed.\n%s" % result, u"Error", wx.OK | wx.ICON_INFORMATION)
+        self.ResetBtnsEnable(True)
 
     def OnRefreshVersions(self, event):
         self.RefreshModuleVersions()
@@ -136,20 +171,13 @@ class PTModuleWindow (wx.Window):
     def OnChooseRepoCompleteCallback(self, cancel):
         if cancel == True:
             self.progressDialog.EndModal(0)
-            self.refreshBtn.Enable(True)
-            if self.dataView.SelectedItemsCount > 0:
-                self.publishBtn.Enable(True)
-                self.deleteBtn.Enable(True)
+            self.ResetBtnsEnable(True)
         else:
             self.progressDialog.ContinueToPublish()
 
     def OnPublishModuleCallback(self, module):
         self.dataViewModel.ChangeValue(module.remoteVersion, self.dataView.Selection, 2)
-
-        self.refreshBtn.Enable(True)
-        if self.dataView.SelectedItemsCount > 0:
-            self.publishBtn.Enable(True)
-            self.deleteBtn.Enable(True)
+        self.ResetBtnsEnable(True)
 
     def OnDeleteVersion(self, event):
         item = self.dataView.Selection
@@ -169,10 +197,7 @@ class PTModuleWindow (wx.Window):
                 self.dataView.Expand(self.dataViewModel.ObjectToItem(tree))
 
     def RefreshModuleVersions(self):
-        self.refreshBtn.Enable(False)
-        self.publishBtn.Enable(False)
-        self.deleteBtn.Enable(False)
-
+        self.ResetBtnsEnable(False)
         mTrees = []
         for tree in self.moduleTree.children:
             for mTree in tree.children:
@@ -181,10 +206,7 @@ class PTModuleWindow (wx.Window):
 
     def RefreshModuleVersionsCallback(self, mTree, allDone):
         if allDone == True:
-            self.refreshBtn.Enable(True)
-            if self.dataView.SelectedItemsCount > 0:
-                self.publishBtn.Enable(True)
-                self.deleteBtn.Enable(True)
+            self.ResetBtnsEnable(True)
         else:
             item = self.dataViewModel.ObjectToItem(mTree)
             self.dataViewModel.ChangeValue(mTree.val.localVersion, item, 1)
@@ -197,10 +219,12 @@ class PTModuleWindow (wx.Window):
             if obj.val != None:
                 self.publishBtn.Enable(True)
                 self.deleteBtn.Enable(True)
+                self.updateBtn.Enable(True)
                 return
 
         self.publishBtn.Enable(False)
         self.deleteBtn.Enable(False)
+        self.updateBtn.Enable(False)
 
     def OnAddModule(self, module, isTrunk):
         if isTrunk == True:
@@ -213,3 +237,16 @@ class PTModuleWindow (wx.Window):
         self.AddModuleInTree(module)
         self.UpdateDataView()
         self.RefreshModuleVersions()
+
+    def ResetBtnsEnable(self, enable):
+        if enable == True:
+            self.refreshBtn.Enable(True)
+            if self.dataView.SelectedItemsCount > 0:
+                self.publishBtn.Enable(True)
+                self.deleteBtn.Enable(True)
+                self.updateBtn.Enable(True)
+        else:
+            self.refreshBtn.Enable(False)
+            self.publishBtn.Enable(False)
+            self.deleteBtn.Enable(False)
+            self.updateBtn.Enable(False)
