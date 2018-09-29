@@ -44,7 +44,7 @@ class PTChooseSpecRepoDialog (wx.Dialog):
         b.Add(cancelBtn, 0)
         b.Add((10, 0))
         b.Add(doneBtn, 0)
-        sizer.Add(b, 0, wx.ALIGN_RIGHT | wx.RIGHT, 30)
+        sizer.Add(b, 0, wx.ALIGN_RIGHT|wx.BOTTOM|wx.RIGHT, 30)
 
         self.SetSizer(sizer)
 

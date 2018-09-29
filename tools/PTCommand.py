@@ -20,6 +20,26 @@ class PTCommand:
             cls.__instance=object.__new__(cls, *args, **kwargs)
         return cls.__instance
 
+    def svnUpgrade(self, path, logCallback, resultCallback):
+        thread.start_new_thread(self.svnUpgradeInThread, (path, logCallback, resultCallback))
+
+    def svnUpgradeInThread(self, path, logCallback, resultCallback):
+        testSvn = "cd %s; %s upgrade" % (path, PTCommandPathConfig().command("svn"))
+        self.logCommand(testSvn, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(testSvn)
+        self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(resultCallback, copyRet, copyOutput)
+
+    def svnCheckPath(self, path, logCallback, resultCallback):
+        thread.start_new_thread(self.svnCheckPathInThread, (path, logCallback, resultCallback))
+
+    def svnCheckPathInThread(self, path, logCallback, resultCallback):
+        testSvn = "cd %s; %s st" % (path, PTCommandPathConfig().command("svn"))
+        self.logCommand(testSvn, logCallback)
+        copyRet, copyOutput = commands.getstatusoutput(testSvn)
+        self.logOutput(copyRet, copyOutput, logCallback)
+        wx.CallAfter(resultCallback, copyRet, path, copyOutput)
+
     def svnUpdateModule(self, module, logCallback, resultCallback):
         thread.start_new_thread(self.svnUpdateModuleInThread, (module, logCallback, resultCallback))
 

@@ -5,6 +5,8 @@ from tools import PTModuleHelper
 from PTFileDrop import PTFileDrop
 from models.PTModule import PTModule
 from PTRepoDialog import PTRepoDialog
+from PTSVNCheckDialog import PTSVNCheckDialog
+from tools.PTCommand import PTCommand
 
 class PTAddLocalModuleFrame (wx.Frame):
     dropBox = None
@@ -33,7 +35,22 @@ class PTAddLocalModuleFrame (wx.Frame):
         self.SetSizer(sizer)
 
     def OnDropFileCallback(self, filepath):
-        PTModuleHelper.FindModuleInfo(filepath, self.logCallback, self.FindModuleInfoCallback)
+        PTCommand().svnCheckPath(filepath, self.logCallback, self.OnCheckSvnEnable)
+
+    def OnCheckSvnEnable(self, success, filepath, result):
+        if result.startswith(u"svn:") == False:
+            self.OnSVNCheckCallback(success, filepath)
+        else:
+            if 'is not a working copy' in result:
+                notWorkingCopy = True
+            else:
+                notWorkingCopy = False
+            dialog = PTSVNCheckDialog(self, filepath, notWorkingCopy, result, self.logCallback, self.OnSVNCheckCallback)
+            dialog.ShowWindowModal()
+
+    def OnSVNCheckCallback(self, success, filepath):
+        if success == 0:
+            PTModuleHelper.FindModuleInfo(filepath, self.logCallback, self.FindModuleInfoCallback)
 
     def FindModuleInfoCallback(self, trunkName, path, version, url, user):
         if trunkName == None:

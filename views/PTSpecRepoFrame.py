@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import wx
-import wx.grid
+import wx.dataview
 from tools.PTCommand import PTCommand
 from tools.PTCommand import PTCommandPathConfig
 from views.PTAddSpecRepoDialog import PTAddSpecRepoDialog
 
 class PTSpecRepoFrame (wx.Frame):
-    specRepoTable = None
+    dataListView = None
 
     addSpecRepoBtn = None
     deleteSpecRepoBtn = None
@@ -34,25 +34,14 @@ class PTSpecRepoFrame (wx.Frame):
         self.OnSuccessGetSpecRepoList()
 
     def OnSuccessGetSpecRepoList(self):
-        row = 0
-        for specRepo in PTCommandPathConfig.podspecList:
-            self.AppendSpecRepo(row, specRepo)
-            row += 1
+        for (name, path) in PTCommandPathConfig.podspecList:
+            self.dataListView.AppendItem([name, path])
 
     def SetupUI(self):
-        # Table
-        self.specRepoTable = wx.grid.Grid(self, wx.ID_ANY)
-        self.specRepoTable.CreateGrid(0, 2, 1)
-        self.specRepoTable.SetAutoLayout(1)
-
-        self.specRepoTable.SetColLabelValue(0, u"Name")
-        self.specRepoTable.SetColSize(0, 180)
-
-        self.specRepoTable.SetColLabelValue(1, u"Remote path")
-        self.specRepoTable.SetColSize(1, 320)
-
-        self.specRepoTable.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnCellLeftClick)
-        self.specRepoTable.Bind(wx.grid.EVT_GRID_LABEL_LEFT_CLICK, self.OnLabelLeftClick)
+        self.dataListView = wx.dataview.DataViewListCtrl(self)
+        self.dataListView.AppendTextColumn(u"Name", 0, width=180)
+        self.dataListView.AppendTextColumn(u"Remote path", 1, width=320)
+        self.dataListView.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.DataViewSelectedRow)
 
         # Btns
         self.addSpecRepoBtn = wx.Button(self, wx.ID_ANY, u"Add Spec Repo")
@@ -68,27 +57,21 @@ class PTSpecRepoFrame (wx.Frame):
         hBox.Add(self.deleteSpecRepoBtn, 0, wx.RIGHT, 10)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.specRepoTable, 1, wx.EXPAND|wx.ALL, 10)
+        sizer.Add(self.dataListView, 1, wx.EXPAND|wx.ALL, 10)
         sizer.Add(hBox, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 10)
 
         self.SetSizer(sizer)
 
-    def AppendSpecRepo(self, row, specRepo):
-        self.specRepoTable.AppendRows(1)
+        self.dataListView.SetFocus()
 
-        self.specRepoTable.SetRowLabelValue(row, "%d" % (row + 1))
-        self.specRepoTable.SetRowSize(row, 30)
-
-        self.specRepoTable.SetCellValue(row, 0, specRepo[0])
-        self.specRepoTable.SetReadOnly(row, 0)
-        self.specRepoTable.SetCellAlignment(row, 0, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
-
-        self.specRepoTable.SetCellValue(row, 1, specRepo[1])
-        self.specRepoTable.SetReadOnly(row, 1)
-        self.specRepoTable.SetCellAlignment(row, 1, wx.ALIGN_LEFT, wx.ALIGN_CENTRE)
+    def DataViewSelectedRow(self, event):
+        if self.dataListView.SelectedItemsCount > 0:
+            self.deleteSpecRepoBtn.Enable(True)
+            return
+        self.deleteSpecRepoBtn.Enable(False)
 
     def ClearSelection(self):
-        self.specRepoTable.ClearSelection()
+        self.dataListView.UnselectAll()
         self.deleteSpecRepoBtn.Enable(False)
 
     def OnAddSpecRepo(self, event):
@@ -96,28 +79,20 @@ class PTSpecRepoFrame (wx.Frame):
         self.addSpecDialog.ShowWindowModal()
 
     def OnDeleteSpecRepo(self, event):
-        row = self.specRepoTable.SelectedRows[0]
-        specRepo = PTCommandPathConfig.podspecList[row]
-        PTCommand().removeSpecRepo(specRepo[0], self.logCallback, self.OnDeleteSpecRepoCompleteCallback)
+        item = self.dataListView.Selection
+        if item != None:
+            row = self.dataListView.ItemToRow(item)
+            specRepo = PTCommandPathConfig.podspecList[row]
+            PTCommand().removeSpecRepo(specRepo[0], self.logCallback, self.OnDeleteSpecRepoCompleteCallback)
 
     def OnDeleteSpecRepoCompleteCallback(self, name):
-        row = self.specRepoTable.SelectedRows[0]
+        item = self.dataListView.Selection
+        row = self.dataListView.ItemToRow(item)
         specRepo = PTCommandPathConfig.podspecList[row]
 
         PTCommandPathConfig.podspecList.remove(specRepo)
-        self.specRepoTable.DeleteRows(row)
+        self.dataListView.DeleteItem(row)
         self.ClearSelection()
-
-    def OnCellLeftClick(self, event):
-        event.Skip()
-
-        row = event.Row
-        self.specRepoTable.ClearSelection()
-        self.specRepoTable.SelectRow(row, True)
-        self.deleteSpecRepoBtn.Enable(True)
-
-    def OnLabelLeftClick(self, event):
-        pass
 
     def OnAddSpecRepoCompleteCallback(self, name, remotePath):
         self.addSpecDialog.EndModal(0)
@@ -126,4 +101,4 @@ class PTSpecRepoFrame (wx.Frame):
     def addSpecRepo(self, name, remotePath):
         self.ClearSelection()
         PTCommandPathConfig.podspecList.append((name, remotePath))
-        self.AppendSpecRepo(len(PTCommandPathConfig.podspecList)-1, (name, remotePath))
+        self.dataListView.AppendItem([name, remotePath])
