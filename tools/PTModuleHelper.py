@@ -116,7 +116,8 @@ def asyncModuleVersions(mTrees, logCallback, resultCallback):
 
 def getVersion(mTrees, logCallback, resultCallback):
     for mTree in mTrees:
-        mTree.val.remoteVersion = getModuleTagsRemoteVersion(mTree.val, logCallback)
+        if mTree.val.exist == True:
+            mTree.val.remoteVersion = getModuleTagsRemoteVersion(mTree.val, logCallback)
         resultCallback(mTree, False)
     resultCallback(None, True)
 

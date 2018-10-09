@@ -61,6 +61,8 @@ class PTModuleViewModel (wx.dataview.PyDataViewModel):
     def GetValue(self, item, col):
         tree = self.ItemToObject(item)
         if col == 0:
+            if tree.val != None and tree.val.exist == False:
+                return tree.name+" (not exist)"
             return tree.name
         elif col == 1:
             if tree.val != None:

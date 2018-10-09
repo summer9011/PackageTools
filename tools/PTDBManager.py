@@ -66,6 +66,7 @@ class PTDBManager:
             module.trunkId = row[4]
             module.trunkName = row[5]
             module.sepcName = row[6]
+            module.exist = os.path.exists(module.path)
 
             if row[3] > 0:
                 module.repo = PTModuleRepo()
@@ -74,7 +75,8 @@ class PTDBManager:
                 module.repo.user = row[9]
                 module.repo.pwd = row[10]
 
-            module.localVersion = PTModuleHelper.getLocalVersion(module.path, logCallback)
+            if module.exist == True:
+                module.localVersion = PTModuleHelper.getLocalVersion(module.path, logCallback)
             moduleList.append(module)
 
         return moduleList

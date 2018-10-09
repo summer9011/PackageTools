@@ -36,6 +36,8 @@ class PTModule:
     localVersion = ""
     remoteVersion = ""
 
+    exist = True
+
     def __init__(self):
         self.id = 0
         self.name = ""
@@ -48,6 +50,8 @@ class PTModule:
 
         self.localVersion = ""
         self.remoteVersion = ""
+
+        self.exist = True
 
     def isTrunk(self):
         return (self.trunkId == 0)

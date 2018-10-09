@@ -217,9 +217,13 @@ class PTModuleWindow (wx.Window):
         if item.GetID() != None:
             obj = self.dataViewModel.ItemToObject(item)
             if obj.val != None:
-                self.publishBtn.Enable(True)
                 self.deleteBtn.Enable(True)
-                self.updateBtn.Enable(True)
+                if obj.val.exist == True:
+                    self.publishBtn.Enable(True)
+                    self.updateBtn.Enable(True)
+                else:
+                    self.publishBtn.Enable(False)
+                    self.updateBtn.Enable(False)
                 return
 
         self.publishBtn.Enable(False)
