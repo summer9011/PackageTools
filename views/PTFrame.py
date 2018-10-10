@@ -18,7 +18,7 @@ class PTFrame (wx.Frame):
     loggerBtn = None
 
     def __init__(self):
-        super(PTFrame, self).__init__(None, wx.ID_ANY, u"iOS Develop Tools", size=(800, 600))
+        super(PTFrame, self).__init__(None, wx.ID_ANY, u"iOS Develop Tools", size=(1000, 600))
 
         self.SetupMenuBar()
         self.SetupUI()
@@ -26,7 +26,7 @@ class PTFrame (wx.Frame):
         self.CentreOnScreen()
         self.Show(True)
 
-        self.OnDisplayLogger(None)
+        # self.OnDisplayLogger(None)
 
     def SetupMenuBar(self):
         addMenu = wx.Menu()
@@ -103,8 +103,8 @@ class PTFrame (wx.Frame):
         logBox.Add(self.loggerWindow, 1, wx.EXPAND)
         panel2.SetSizerAndFit(logBox)
 
-        bottomPane = wx.aui.AuiPaneInfo().Bottom().Name("logger").CloseButton(False).MinSize((70, 140))
-        self.mgr.AddPane(panel2, bottomPane)
+        leftPane = wx.aui.AuiPaneInfo().Left().Name("logger").CloseButton(False).MinSize((400, 600))
+        self.mgr.AddPane(panel2, leftPane)
 
         self.mgr.Update()
 
@@ -112,7 +112,7 @@ class PTFrame (wx.Frame):
 
     def CreateBottomWindow(self, panel):
         bottomWindow = wx.Window(panel)
-        self.loggerBtn = wx.Button(bottomWindow, wx.ID_ANY, u"Show Logger")
+        self.loggerBtn = wx.Button(bottomWindow, wx.ID_ANY, u"Hide Logger")
         self.loggerBtn.Bind(wx.EVT_BUTTON, self.OnDisplayLogger)
         hBox = wx.BoxSizer(wx.HORIZONTAL)
         hBox.Add(self.loggerBtn, 0)

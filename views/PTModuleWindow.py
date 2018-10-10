@@ -89,8 +89,8 @@ class PTModuleWindow (wx.Window):
     def SetupUI(self):
         self.dataView = wx.dataview.DataViewCtrl(self)
         self.dataView.AppendTextColumn(u"Module", 0, width=280)
-        self.dataView.AppendTextColumn(u"Version", 1, width=160)
-        self.dataView.AppendTextColumn(u"Latest Version", 2, width=160)
+        self.dataView.AppendTextColumn(u"Version", 1, width=100)
+        self.dataView.AppendTextColumn(u"Latest Version", 2, width=100)
         self.dataView.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.DataViewSelectedRow)
 
         self.refreshBtn = wx.Button(self, wx.ID_ANY, u"Refresh versions")

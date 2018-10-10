@@ -11,7 +11,7 @@ class PTChooseSpecRepoDialog (wx.Dialog):
     callback = None
 
     def __init__(self, parent, module, callback):
-        super(PTChooseSpecRepoDialog, self).__init__(parent, size=(500, 160))
+        super(PTChooseSpecRepoDialog, self).__init__(parent, size=(500, 180))
 
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
