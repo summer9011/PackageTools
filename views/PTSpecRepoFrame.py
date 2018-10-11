@@ -14,12 +14,16 @@ class PTSpecRepoFrame (wx.Frame):
     addSpecDialog = None
 
     logCallback = None
+    closeCallback = None
 
-    def __init__(self, parent, logCallback):
-        super(PTSpecRepoFrame, self).__init__(parent, wx.ID_ANY, u"Podspec Repo List", size=(600, 400))
+    def __init__(self, parent, logCallback, closeCallback):
+        super(PTSpecRepoFrame, self).__init__(parent, wx.ID_ANY, u"Podspec Repo List", size=(600, 400), style= wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.FRAME_FLOAT_ON_PARENT)
 
         self.logCallback = logCallback
+        self.closeCallback = closeCallback
+
         self.SetupUI()
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         if PTCommandPathConfig.podspecList == None:
             PTCommand().getSpecRepoList(self.logCallback, self.OnGetSpecRepoListCompleteCallback)
@@ -28,6 +32,10 @@ class PTSpecRepoFrame (wx.Frame):
 
         self.CentreOnScreen()
         self.Show(True)
+
+    def OnClose(self, event):
+        self.Destroy()
+        self.closeCallback()
 
     def OnGetSpecRepoListCompleteCallback(self, specRepoList):
         PTCommandPathConfig.podspecList = specRepoList

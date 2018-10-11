@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import wx
 import os
+import resources.PTResourcePath as Res
 from tools import PTModuleHelper
 from PTFileDrop import PTFileDrop
 from models.PTModule import PTModule
@@ -9,33 +10,54 @@ from PTSVNCheckDialog import PTSVNCheckDialog
 from tools.PTCommand import PTCommand
 
 class PTAddLocalModuleFrame (wx.Frame):
-    dropBox = None
+    tipText = None
     fileDrop = None
 
     logCallback = None
     callback = None
+    closeCallback = None
 
-    def __init__(self, parent, logCalllback, callback):
-        super(PTAddLocalModuleFrame, self).__init__(parent, wx.ID_ANY, u"Add local module", size=(600, 400))
+    def __init__(self, parent, logCalllback, callback, closeCallback):
+        super(PTAddLocalModuleFrame, self).__init__(parent, wx.ID_ANY, u"Add local module", size=(600, 300), style= wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.FRAME_FLOAT_ON_PARENT)
 
         self.logCallback = logCalllback
         self.callback = callback
+        self.closeCallback = closeCallback
 
         self.SetupUI()
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.CentreOnScreen()
         self.Show(True)
 
+    def OnClose(self, event):
+        self.Destroy()
+        self.closeCallback()
+
     def SetupUI(self):
-        self.fileDrop = PTFileDrop(self.OnDropFileCallback)
-        self.dropBox = wx.StaticBox(self, label=u"*Drag local module here.")
-        self.dropBox.SetDropTarget(self.fileDrop)
+        self.fileDrop = PTFileDrop(self.OnDropFileCallback, self.OnEnterDropCallback)
+        self.SetDropTarget(self.fileDrop)
+
+        image = wx.Image(Res.getAddPng()).ConvertToBitmap()
+        backImage = wx.StaticBitmap(self, wx.ID_ANY, image)
+        self.tipText = wx.StaticText(self, wx.ID_ANY, u"Drag module here.")
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.dropBox, 1, wx.EXPAND|wx.ALL, 10)
+        sizer.Add((0, 90))
+        sizer.Add(backImage, 0, wx.ALIGN_CENTER)
+        sizer.Add((0, 10))
+        sizer.Add(self.tipText, 0, wx.ALIGN_CENTER)
         self.SetSizer(sizer)
 
     def OnDropFileCallback(self, filepath):
+        self.OnEnterDropCallback(False)
         PTCommand().svnCheckPath(filepath, self.logCallback, self.OnCheckSvnEnable)
+
+    def OnEnterDropCallback(self, isEnter):
+        if isEnter == True:
+            self.tipText.SetLabel(u"Drop it!!!")
+        else:
+            self.tipText.SetLabel(u"Drag module here.")
+        self.Layout()
 
     def OnCheckSvnEnable(self, success, filepath, result):
         if result.startswith(u"svn:") == False:

@@ -15,6 +15,10 @@ class PTFrame (wx.Frame):
     moduleWindow = None
     loggerWindow = None
 
+    sepcRepoFrame = None
+    envFrame = None
+    localFrame = None
+
     loggerBtn = None
 
     def __init__(self):
@@ -54,16 +58,28 @@ class PTFrame (wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
 
     def OnAddLocalModule(self, event):
-        PTAddLocalModuleFrame(self, self.OnLogCallback, self.OnAddLocalModuelCallback)
+        if self.localFrame == None:
+            self.localFrame = PTAddLocalModuleFrame(self, self.OnLogCallback, self.OnAddLocalModuelCallback, self.OnCloseAddLocalFrameCallback)
+
+    def OnCloseAddLocalFrameCallback(self):
+        self.localFrame = None
 
     def OnAddLocalModuelCallback(self, module, isTrunk):
         self.moduleWindow.OnAddModule(module, isTrunk)
 
     def OnShowSpecRepoList(self, event):
-        PTSpecRepoFrame(self, self.OnLogCallback)
+        if self.sepcRepoFrame == None:
+            self.sepcRepoFrame = PTSpecRepoFrame(self, self.OnLogCallback, self.OnCloseSpecRepoFrameCallback)
+
+    def OnCloseSpecRepoFrameCallback(self):
+        self.sepcRepoFrame = None
 
     def OnShowCommands(self, event):
-        PTEnvironmentFrame(self, self.OnLogCallback)
+        if self.envFrame == None:
+            self.envFrame = PTEnvironmentFrame(self, self.OnLogCallback, self.OnEnvFrameCallback)
+
+    def OnEnvFrameCallback(self):
+        self.envFrame = None
 
     def OnExit(self, event):
         self.Close(True)

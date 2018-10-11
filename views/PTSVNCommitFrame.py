@@ -15,7 +15,7 @@ class PTSVNCommitFrame (wx.Frame):
     callback = None
 
     def __init__(self, parent, files, logCalllback, callback):
-        super(PTSVNCommitFrame, self).__init__(parent, wx.ID_ANY, u"Choose files to commit", size=(600, 400))
+        super(PTSVNCommitFrame, self).__init__(parent, wx.ID_ANY, u"Choose files to commit", size=(600, 400), style= wx.CLOSE_BOX | wx.RESIZE_BORDER | wx.SYSTEM_MENU)
 
         self.files = files
         self.logCallback = logCalllback

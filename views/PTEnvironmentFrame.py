@@ -13,15 +13,22 @@ class PTEnvironmentFrame (wx.Frame):
     checkPodCommandBtn = None
 
     logCallback = None
+    closeCallback = None
 
-    def __init__(self, parent, logCallback):
-        super(PTEnvironmentFrame, self).__init__(parent, wx.ID_ANY, u"Commands", size=(600, 400))
+    def __init__(self, parent, logCallback, closeCallback):
+        super(PTEnvironmentFrame, self).__init__(parent, wx.ID_ANY, u"Commands", size=(600, 400), style= wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.FRAME_FLOAT_ON_PARENT)
 
         self.logCallback = logCallback
+        self.closeCallback = closeCallback
 
         self.SetupUI()
+        self.Bind(wx.EVT_CLOSE, self.OnClose)
         self.CentreOnScreen()
         self.Show(True)
+
+    def OnClose(self, event):
+        self.Destroy()
+        self.closeCallback()
 
     def SetupUI(self):
         self.svnCommandText = wx.TextCtrl(self, wx.ID_ANY, style=wx.TE_LEFT, size=(280, 22))

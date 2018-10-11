@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import wx
 import wx.dataview
+import wx.adv
+import resources.PTResourcePath as Res
 from tools.PTCommand import PTCommand
 
 from tools import PTModuleHelper
@@ -108,11 +110,17 @@ class PTModuleWindow (wx.Window):
         self.updateBtn.Bind(wx.EVT_BUTTON, self.OnUpdateModule)
         self.updateBtn.Enable(False)
 
+        animation = wx.adv.Animation(Res.getLoadingGif())
+        animationCtrl = wx.adv.AnimationCtrl(self, wx.ID_ANY, animation, size=animation.GetSize())
+        animationCtrl.Play()
+
         b = wx.BoxSizer(wx.HORIZONTAL)
         b.Add(self.refreshBtn, 0, wx.RIGHT, 30)
         b.Add(self.publishBtn, 0, wx.RIGHT, 30)
         b.Add(self.deleteBtn, 0, wx.RIGHT, 30)
+        b.Add(animationCtrl, 0, wx.RIGHT, 30)
         b.Add(self.updateBtn, 0)
+
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.dataView, 1, wx.EXPAND|wx.ALL, 10)
