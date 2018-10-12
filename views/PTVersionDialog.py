@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import wx
+import wx.adv
+import resources.PTResourcePath as Res
 import tools.PTModuleHelper as Helper
 
 class PTVersionDialog (wx.Dialog):
     versionText = None
     publishBtn = None
+    loadingCtrl = None
 
     module = None
     callback = None
@@ -43,10 +46,16 @@ class PTVersionDialog (wx.Dialog):
         cancelBtn = wx.Button(self, wx.ID_ANY, u"Cancel")
         cancelBtn.Bind(wx.EVT_BUTTON, self.OnCancelAction)
 
+        animation = wx.adv.Animation(Res.getSmallLoadingGif())
+        self.loadingCtrl = wx.adv.AnimationCtrl(self, wx.ID_ANY, animation, size=(22, 22))
+        self.loadingCtrl.Hide()
+
         b = wx.BoxSizer(wx.HORIZONTAL)
         b.Add(cancelBtn)
         b.Add((10, 0))
         b.Add(self.publishBtn)
+        b.Add((10, 0))
+        b.Add(self.loadingCtrl)
         sizer.Add(b, 0, wx.ALIGN_RIGHT | wx.RIGHT, 30)
         sizer.Add((0, 20))
 
@@ -59,6 +68,9 @@ class PTVersionDialog (wx.Dialog):
             self.publishBtn.Enable(False)
 
     def OnChangeModule(self, event):
+        self.loadingCtrl.Show()
+        self.loadingCtrl.Play()
+        self.Layout()
         Helper.writeVersionToModule(self.module, self.versionText.GetValue(), self.OnWriteVersionCallback)
 
     def OnWriteVersionCallback(self, versionChanged):
@@ -69,5 +81,12 @@ class PTVersionDialog (wx.Dialog):
         else:
             wx.MessageBox(u"Change verison failed.", u"Error", wx.OK | wx.ICON_INFORMATION)
 
+        self.loadingCtrl.Stop()
+        self.loadingCtrl.Hide()
+        self.Layout()
+
     def OnCancelAction(self, event):
+        self.loadingCtrl.Stop()
+        self.loadingCtrl.Hide()
+        self.Layout()
         self.EndModal(wx.ID_OK)

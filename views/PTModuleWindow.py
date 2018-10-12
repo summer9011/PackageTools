@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import wx
 import wx.dataview
+import wx.adv
+import resources.PTResourcePath as Res
 from tools.PTCommand import PTCommand
 
 from tools import PTModuleHelper
@@ -10,6 +12,7 @@ from models.PTModuleViewModel import PTModuleTree
 from PTVersionDialog import PTVersionDialog
 from PTPublishDialog import PTPublishDialog
 from PTChooseSpecRepoDialog import PTChooseSpecRepoDialog
+from PTDeleteDialog import PTDeleteDialog
 
 class PTModuleWindow (wx.Window):
     dataView = None
@@ -182,10 +185,17 @@ class PTModuleWindow (wx.Window):
     def OnDeleteVersion(self, event):
         item = self.dataView.Selection
         m = self.dataViewModel.ItemToObject(item)
-        self.dataView.Unselect(item)
-        PTDBManager().deleteModule(m.val)
-        self.DeleteModuleInTree(m)
-        self.UpdateDataView()
+        deleteDialog = PTDeleteDialog(self, m.val, self.OnDeleteCompleteCallback)
+        deleteDialog.ShowWindowModal()
+
+    def OnDeleteCompleteCallback(self, shouldDelete):
+        if shouldDelete == True:
+            item = self.dataView.Selection
+            m = self.dataViewModel.ItemToObject(item)
+            self.dataView.Unselect(item)
+            PTDBManager().deleteModule(m.val)
+            self.DeleteModuleInTree(m)
+            self.UpdateDataView()
 
     def UpdateDataView(self):
         if self.moduleTree != None:

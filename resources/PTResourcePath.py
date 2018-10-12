@@ -8,3 +8,6 @@ def getSmallLoadingGif():
 
 def getAddPng():
     return "resources/add.png"
+
+def getSuccessPng():
+    return "resources/success.png"
