@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import wx
 import os
+import wx.adv
 import resources.PTResourcePath as Res
 from tools import PTModuleHelper
 from PTFileDrop import PTFileDrop
@@ -11,6 +12,7 @@ from tools.PTCommand import PTCommand
 
 class PTAddLocalModuleFrame (wx.Frame):
     tipText = None
+    loadingCtrl = None
     fileDrop = None
 
     logCallback = None
@@ -18,7 +20,7 @@ class PTAddLocalModuleFrame (wx.Frame):
     closeCallback = None
 
     def __init__(self, parent, logCalllback, callback, closeCallback):
-        super(PTAddLocalModuleFrame, self).__init__(parent, wx.ID_ANY, u"Add local module", size=(600, 300), style= wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.FRAME_FLOAT_ON_PARENT)
+        super(PTAddLocalModuleFrame, self).__init__(parent, wx.ID_ANY, u"Add local module", size=(600, 300), style= wx.CLOSE_BOX | wx.SYSTEM_MENU)
 
         self.logCallback = logCalllback
         self.callback = callback
@@ -41,16 +43,26 @@ class PTAddLocalModuleFrame (wx.Frame):
         backImage = wx.StaticBitmap(self, wx.ID_ANY, image)
         self.tipText = wx.StaticText(self, wx.ID_ANY, u"Drag module here.")
 
+        animation = wx.adv.Animation(Res.getLoadingGif())
+        self.loadingCtrl = wx.adv.AnimationCtrl(self, wx.ID_ANY, animation, size=animation.GetSize())
+        self.loadingCtrl.Hide()
+
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add((0, 90))
+        sizer.Add((0, 70))
         sizer.Add(backImage, 0, wx.ALIGN_CENTER)
         sizer.Add((0, 10))
         sizer.Add(self.tipText, 0, wx.ALIGN_CENTER)
+        sizer.Add((0, 10))
+        sizer.Add(self.loadingCtrl, 0, wx.ALIGN_CENTER)
         self.SetSizer(sizer)
 
-    def OnDropFileCallback(self, filepath):
-        self.OnEnterDropCallback(False)
-        PTCommand().svnCheckPath(filepath, self.logCallback, self.OnCheckSvnEnable)
+    def ShowLoading(self, show):
+        if show == True:
+            self.loadingCtrl.Show()
+            self.loadingCtrl.Play()
+        else:
+            self.loadingCtrl.Stop()
+            self.loadingCtrl.Hide()
 
     def OnEnterDropCallback(self, isEnter):
         if isEnter == True:
@@ -59,11 +71,21 @@ class PTAddLocalModuleFrame (wx.Frame):
             self.tipText.SetLabel(u"Drag module here.")
         self.Layout()
 
+    def OnDropFileCallback(self, filepath):
+        if self.loadingCtrl.IsPlaying() == True:
+            self.OnEnterDropCallback(False)
+            return
+
+        self.ShowLoading(True)
+        self.OnEnterDropCallback(False)
+        PTCommand().svnCheckPath(filepath, self.logCallback, self.OnCheckSvnEnable)
+
     def OnCheckSvnEnable(self, success, filepath, result):
         if result.startswith(u"svn:") == False:
             self.OnSVNCheckCallback(success, filepath)
         else:
             if 'is not a working copy' in result:
+                self.ShowLoading(False)
                 notWorkingCopy = True
             else:
                 notWorkingCopy = False
@@ -73,9 +95,12 @@ class PTAddLocalModuleFrame (wx.Frame):
     def OnSVNCheckCallback(self, success, filepath):
         if success == 0:
             PTModuleHelper.FindModuleInfo(filepath, self.logCallback, self.FindModuleInfoCallback)
+        else:
+            self.ShowLoading(False)
 
     def FindModuleInfoCallback(self, trunkName, path, version, url, user):
         if trunkName == None:
+            self.ShowLoading(False)
             wx.MessageBox(u"Can't find module info.", u"Error", wx.OK | wx.ICON_INFORMATION)
         else:
             m = PTModule()
@@ -86,5 +111,10 @@ class PTAddLocalModuleFrame (wx.Frame):
 
             urlArr = url.split("/")
             urlArr.pop()
-            dlg = PTRepoDialog(self, m, "/".join(urlArr), user, self.callback)
+            dlg = PTRepoDialog(self, m, "/".join(urlArr), user, self.OnRepoDialogCallback)
             dlg.ShowWindowModal()
+
+    def OnRepoDialogCallback(self, module, isTrunk):
+        self.ShowLoading(False)
+        if module != None:
+            self.callback(module, isTrunk)

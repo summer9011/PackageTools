@@ -39,7 +39,7 @@ class PTRepoDialog (wx.Dialog):
 
         box = wx.BoxSizer(wx.VERTICAL)
         if needUser == True or needPwd == True:
-            accountInfo = wx.StaticText(self, wx.ID_ANY, u"Repo Account Info")
+            accountInfo = wx.StaticText(self, wx.ID_ANY, u"Repo Account Info (%s)" % module.name)
             box.Add(accountInfo, 0, wx.ALIGN_CENTER|wx.TOP, 10)
 
             grid = wx.FlexGridSizer(3, 2, 10, 10)
@@ -66,7 +66,7 @@ class PTRepoDialog (wx.Dialog):
             box.Add(grid, 0, wx.LEFT|wx.RIGHT|wx.TOP, 10)
             box.Add((0, 10))
 
-        moduleInfo = wx.StaticText(self, wx.ID_ANY, u"Module Info")
+        moduleInfo = wx.StaticText(self, wx.ID_ANY, u"Module Info (%s)" % module.name)
         box.Add(moduleInfo, 0, wx.ALIGN_CENTER|wx.TOP, 10)
 
         grid2 = wx.GridSizer(1, 2, 10, 10)
@@ -109,4 +109,5 @@ class PTRepoDialog (wx.Dialog):
         self.EndModal(wx.ID_OK)
 
     def OnCancelAction(self, event):
+        self.callback(None, None)
         self.EndModal(wx.ID_OK)

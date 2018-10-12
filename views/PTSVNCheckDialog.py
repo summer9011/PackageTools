@@ -68,9 +68,8 @@ class PTSVNCheckDialog (wx.Dialog):
             PTCommand().svnUpgrade(self.path, self.logCallback, self.OnSVNUpgradeCallback)
 
     def OnSVNUpgradeCallback(self, success, result):
-        if success == 0:
-            self.callback(success, self.path)
-        else:
+        self.callback(success, self.path)
+        if success != 0:
             wx.MessageBox(u"Svn upgrade failed. \n%s" % result, u"Error", wx.OK | wx.ICON_INFORMATION)
         self.EndModal(wx.ID_OK)
 

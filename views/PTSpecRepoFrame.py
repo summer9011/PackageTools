@@ -1,12 +1,16 @@
 #!/usr/bin/env python
 import wx
 import wx.dataview
+import wx.adv
+import resources.PTResourcePath as Res
 from tools.PTCommand import PTCommand
 from tools.PTCommand import PTCommandPathConfig
 from views.PTAddSpecRepoDialog import PTAddSpecRepoDialog
 
 class PTSpecRepoFrame (wx.Frame):
     dataListView = None
+    loadingCtrl = None
+    loadingText = None
 
     addSpecRepoBtn = None
     deleteSpecRepoBtn = None
@@ -16,19 +20,23 @@ class PTSpecRepoFrame (wx.Frame):
     logCallback = None
     closeCallback = None
 
+    hBox = None
+    lcBox = None
+
     def __init__(self, parent, logCallback, closeCallback):
-        super(PTSpecRepoFrame, self).__init__(parent, wx.ID_ANY, u"Podspec Repo List", size=(600, 400), style= wx.CLOSE_BOX | wx.SYSTEM_MENU | wx.FRAME_FLOAT_ON_PARENT)
+        super(PTSpecRepoFrame, self).__init__(parent, wx.ID_ANY, u"Podspec Repo List", size=(600, 400), style= wx.CLOSE_BOX | wx.SYSTEM_MENU)
 
         self.logCallback = logCallback
         self.closeCallback = closeCallback
 
-        self.SetupUI()
+        hasList = (PTCommandPathConfig.podspecList != None)
+        self.SetupUI(hasList)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
-        if PTCommandPathConfig.podspecList == None:
-            PTCommand().getSpecRepoList(self.logCallback, self.OnGetSpecRepoListCompleteCallback)
-        else:
+        if hasList:
             self.OnSuccessGetSpecRepoList()
+        else:
+            PTCommand().getSpecRepoList(self.logCallback, self.OnGetSpecRepoListCompleteCallback)
 
         self.CentreOnScreen()
         self.Show(True)
@@ -41,15 +49,37 @@ class PTSpecRepoFrame (wx.Frame):
         PTCommandPathConfig.podspecList = specRepoList
         self.OnSuccessGetSpecRepoList()
 
+        self.loadingCtrl.Stop()
+        self.loadingCtrl.Hide()
+        self.loadingText.Hide()
+        sizer = self.GetSizer()
+        sizer.Hide(self.lcBox)
+        sizer.Show(self.dataListView)
+        sizer.Show(self.hBox)
+        self.Layout()
+
     def OnSuccessGetSpecRepoList(self):
         for (name, path) in PTCommandPathConfig.podspecList:
             self.dataListView.AppendItem([name, path])
 
-    def SetupUI(self):
+    def SetupUI(self, hasList):
         self.dataListView = wx.dataview.DataViewListCtrl(self)
         self.dataListView.AppendTextColumn(u"Name", 0, width=180)
         self.dataListView.AppendTextColumn(u"Remote path", 1, width=320)
         self.dataListView.Bind(wx.dataview.EVT_DATAVIEW_SELECTION_CHANGED, self.DataViewSelectedRow)
+
+        animation = wx.adv.Animation(Res.getLoadingGif())
+        self.loadingCtrl = wx.adv.AnimationCtrl(self, wx.ID_ANY, animation, size=animation.GetSize())
+        font = wx.Font()
+        font.SetPointSize(36)
+        self.loadingText = wx.StaticText(self, wx.ID_ANY, u"Loading...")
+        self.loadingText.SetFont(font)
+        lBox = wx.BoxSizer(wx.HORIZONTAL)
+        lBox.Add(self.loadingCtrl, 0, wx.RIGHT, 10)
+        lBox.Add(self.loadingText, 0)
+
+        self.lcBox = wx.BoxSizer(wx.HORIZONTAL)
+        self.lcBox.Add(lBox, 0, wx.ALIGN_CENTER)
 
         # Btns
         self.addSpecRepoBtn = wx.Button(self, wx.ID_ANY, u"Add Spec Repo")
@@ -59,15 +89,25 @@ class PTSpecRepoFrame (wx.Frame):
         self.deleteSpecRepoBtn.Bind(wx.EVT_BUTTON, self.OnDeleteSpecRepo)
         self.deleteSpecRepoBtn.Enable(False)
 
-        hBox = wx.BoxSizer(wx.HORIZONTAL)
-        hBox.Add(self.addSpecRepoBtn, 0, wx.LEFT, 10)
-        hBox.Add(wx.StaticText(self), 1, wx.EXPAND)
-        hBox.Add(self.deleteSpecRepoBtn, 0, wx.RIGHT, 10)
+        self.hBox = wx.BoxSizer(wx.HORIZONTAL)
+        self.hBox.Add(self.addSpecRepoBtn, 0, wx.LEFT, 10)
+        self.hBox.Add(wx.StaticText(self), 1, wx.EXPAND)
+        self.hBox.Add(self.deleteSpecRepoBtn, 0, wx.RIGHT, 10)
 
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer.Add(self.dataListView, 1, wx.EXPAND|wx.ALL, 10)
-        sizer.Add(hBox, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 10)
+        sizer.Add(self.hBox, 0, wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM, 10)
+        sizer.Add(self.lcBox, 1, wx.CENTER)
 
+        if hasList == True:
+            self.loadingCtrl.Stop()
+            self.loadingCtrl.Hide()
+            sizer.Hide(self.lcBox)
+        else:
+            sizer.Hide(self.dataListView)
+            sizer.Hide(self.hBox)
+            self.loadingCtrl.Show()
+            self.loadingCtrl.Play()
         self.SetSizer(sizer)
 
         self.dataListView.SetFocus()
