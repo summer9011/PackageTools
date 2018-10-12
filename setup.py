@@ -8,8 +8,21 @@ Usage:
 from setuptools import setup
 
 APP = ['P365Tool.py']
+APP_NAME = "ModuleTools"
 DATA_FILES = []
-OPTIONS = {}
+OPTIONS = {
+    'argv_emulation': True,
+    'iconfile': 'app.icns',
+    'plist': {
+        'CFBundleName': APP_NAME,
+        'CFBundleDisplayName': APP_NAME,
+        'CFBundleGetInfoString': "Package module tools",
+        'CFBundleIdentifier': "com.perfect365.tools",
+        'CFBundleVersion': "0.1.0",
+        'CFBundleShortVersionString': "0.1.0",
+        'NSHumanReadableCopyright': u"Copyright at 2018, Leebo, All Rights Reserved"
+    }
+}
 
 setup(
     app=APP,
