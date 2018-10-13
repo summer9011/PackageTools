@@ -209,10 +209,11 @@ class PTModuleWindow (wx.Window):
     def RefreshModuleVersions(self):
         self.ResetBtnsEnable(False)
         mTrees = []
-        for tree in self.moduleTree.children:
-            for mTree in tree.children:
-                mTrees.append(mTree)
-        PTModuleHelper.asyncModuleVersions(mTrees, self.logCallback, self.RefreshModuleVersionsCallback)
+        if self.moduleTree != None:
+            for tree in self.moduleTree.children:
+                for mTree in tree.children:
+                    mTrees.append(mTree)
+            PTModuleHelper.asyncModuleVersions(mTrees, self.logCallback, self.RefreshModuleVersionsCallback)
 
     def RefreshModuleVersionsCallback(self, mTree, allDone):
         if allDone == True:
