@@ -166,6 +166,21 @@ class PTDBManager:
         return True
 
     # Module repo methods
+    def getModuleRepoList(self):
+        self.openDB()
+        self.dbCursor.execute("select * from pt_module_repo;")
+        results = self.dbCursor.fetchall()
+
+        repoList = []
+        for row in results:
+            repo = PTModuleRepo()
+            repo.id = row[0]
+            repo.url = row[1]
+            repo.user = row[2]
+            repo.pwd = row[3]
+            repoList.append(repo)
+        return repoList
+
     def findModuleRepo(self, url):
         self.openDB()
         self.dbCursor.execute("select * from pt_module_repo where url = \"%s\";" % url)
@@ -188,5 +203,11 @@ class PTDBManager:
             "user", 
             "pwd") values ("%s", "%s", "%s")""" % (repo.url, repo.user, repo.pwd))
             repo.id = self.dbCursor.lastrowid
+        self.dbConnect.commit()
+        return True
+
+    def updateModuleRepoInfo(self, repo):
+        self.openDB()
+        self.dbCursor.execute("update pt_module_repo set url=\"%s\", user=\"%s\", pwd=\"%s\" where id=%d;" % (repo.url, repo.user, repo.pwd, repo.id))
         self.dbConnect.commit()
         return True

@@ -6,6 +6,7 @@ from views.PTModuleWindow import PTModuleWindow
 from views.PTLoggerWindow import PTLoggerWindow
 
 from views.PTSpecRepoFrame import PTSpecRepoFrame
+from views.PTCodeRepoFrame import PTCodeRepoFrame
 from views.PTEnvironmentFrame import PTEnvironmentFrame
 from views.PTAddLocalModuleFrame import PTAddLocalModuleFrame
 
@@ -16,6 +17,7 @@ class PTFrame (wx.Frame):
     loggerWindow = None
 
     sepcRepoFrame = None
+    codeRepoFrame = None
     envFrame = None
     localFrame = None
 
@@ -37,9 +39,10 @@ class PTFrame (wx.Frame):
         addLocalModuleItem = addMenu.Append(-1, "&Add Local Module...\tCtrl-A", "Add local module")
 
         fileMenu = wx.Menu()
-        specRepoItem = fileMenu.Append(-1, "&Podspec Repo List...\tCtrl-P", "Show Podspec repo list")
+        specRepoItem = fileMenu.Append(-1, "&Podspec Repo List...\tCtrl-P", "Show podspec repo list")
+        codeRepoItem = fileMenu.Append(-1, "&Code Repo List...\tCtrl-C", "Show code repo list")
         fileMenu.AppendSeparator()
-        environmentItem = fileMenu.Append(-1, "&Commands...\tCtrl-E", "Show Commands paths")
+        environmentItem = fileMenu.Append(-1, "&Commands...\tCtrl-E", "Show commands paths")
         exitItem = fileMenu.Append(wx.ID_EXIT)
 
         helpMenu = wx.Menu()
@@ -53,6 +56,7 @@ class PTFrame (wx.Frame):
 
         self.Bind(wx.EVT_MENU, self.OnAddLocalModule,  addLocalModuleItem)
         self.Bind(wx.EVT_MENU, self.OnShowSpecRepoList,  specRepoItem)
+        self.Bind(wx.EVT_MENU, self.OnShowCodeRepoList,  codeRepoItem)
         self.Bind(wx.EVT_MENU, self.OnShowCommands,  environmentItem)
         self.Bind(wx.EVT_MENU, self.OnExit,  exitItem)
         self.Bind(wx.EVT_MENU, self.OnAbout, aboutItem)
@@ -73,6 +77,13 @@ class PTFrame (wx.Frame):
 
     def OnCloseSpecRepoFrameCallback(self):
         self.sepcRepoFrame = None
+
+    def OnShowCodeRepoList(self, event):
+        if self.codeRepoFrame == None:
+            self.codeRepoFrame = PTCodeRepoFrame(self, self.OnLogCallback, self.OnCloseCodeRepoFrameCallback)
+
+    def OnCloseCodeRepoFrameCallback(self):
+        self.codeRepoFrame = None
 
     def OnShowCommands(self, event):
         if self.envFrame == None:
